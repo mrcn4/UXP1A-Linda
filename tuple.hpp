@@ -53,9 +53,11 @@ namespace linda {
 			}
 			
 			TupleElement& operator=(const TupleElement& other) {
+				if(&other == this) return *this;
 				delete_data();
 				data_type = other.data_type;
 				new_data(other);
+				return *this;
 			}
 			
 			
