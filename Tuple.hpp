@@ -47,31 +47,32 @@ namespace linda {
 				return data_type;
 			}
 
-			template<class T>
-			bool compare(const TupleElement& other, bool (*compare_fun)(const T&, const T&) ) const {
-				if(other.data_type != this->data_type) return false;
+//			template<class T>
+//			bool compare(const TupleElement& other, bool (*compare_fun)(const T&, const T&) ) const {
+//				if(other.data_type != this->data_type) return false;
+//
+//				switch(data_type) {
+//					case INT:
+//						if( !compare_fun( *(int*)(data_ptr), *(int*)(other.data_ptr)) )
+//							return false;
+//						break;
+//					case FLOAT:
+//						if( !compare_fun( *(float*)(data_ptr), *(float*)(other.data_ptr)) )
+//							return false;
+//						break;
+//					case STRING:
+//						if( !compare_fun( *(string*)(data_ptr), *(string*)(other.data_ptr)) )
+//							return false;
+//						break;
+//				}
+//
+//				return true;
+//			}
+//
+//			bool operator==(const TupleElement* other) const {
+//				return compare(other, []())
+//			}
 
-				switch(data_type) {
-					case INT:
-						if( !compare_fun( *(int*)(data_ptr), *(int*)(other.data_ptr)) )
-							return false;
-						break;
-					case FLOAT:
-						if( !compare_fun( *(float*)(data_ptr), *(float*)(other.data_ptr)) )
-							return false;
-						break;
-					case STRING:
-						if( !compare_fun( *(string*)(data_ptr), *(string*)(other.data_ptr)) )
-							return false;
-						break;
-				}
-
-				return true;
-			}
-
-			bool operator==(const TupleElement* other) const {
-				return compare(other, []())
-			}
 		
 			~TupleElement() {
 				delete_data();
