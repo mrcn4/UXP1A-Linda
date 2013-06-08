@@ -1,13 +1,23 @@
 #include <vector>
 #include <string>
 #include <stdexcept> //std::invalid_argument
+#include <cstring>
 
 /*
 Szkic krotki. Troche zboczylem z dokumentacji. W sumie na poczatku myslalem ze bedzie mniej kodu, ale chyba nie wyszlo. Zalety to standardowy interface Tuple dzieki uzyciu bezposrednio vector oraz w zamysle wygodniejsze uzywanie. Sam nie wiem czy to sie nadaje.
 Co myslicie? 
+
+Pozwolilem sobie zmienic troche krotke - zamienilem ja na strukturke i dodalem do niej metody serializacji i deserializacji - /mj
 */
 
 namespace linda {
+	
+	//ta strukturka pozwala na wygodne zwracanie zserializowanych danych o krotce lub elemencie krotki
+	struct SerializedTuple
+	{
+		short length;
+		char* data;
+	};
 
 	class TupleElement {
 		public:
@@ -28,6 +38,7 @@ namespace linda {
 				var = *(std::string*)data_ptr;
 			}
 			
+			SerializedTuple serialize();
 
 			TupleElement(int var) : data_type(INT) {
 				data_ptr = (void*) new int(var);
@@ -98,8 +109,13 @@ namespace linda {
 				}
 			}
 	};
-	
-	typedef std::vector<TupleElement> Tuple;
+	//typedef std::vector<TupleElement> Tuple;
+	struct Tuple
+	{
+		SerializedTuple serialize();
+		void deserialize(int length, char* tuple);
+		std::vector<TupleElement> values;
+	};
 }
 
 
