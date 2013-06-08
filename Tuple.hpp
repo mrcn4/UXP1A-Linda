@@ -2,22 +2,11 @@
 #include <string>
 #include <stdexcept> //std::invalid_argument
 #include <cstring>
-
-/*
-Szkic krotki. Troche zboczylem z dokumentacji. W sumie na poczatku myslalem ze bedzie mniej kodu, ale chyba nie wyszlo. Zalety to standardowy interface Tuple dzieki uzyciu bezposrednio vector oraz w zamysle wygodniejsze uzywanie. Sam nie wiem czy to sie nadaje.
-Co myslicie? 
-
-Pozwolilem sobie zmienic troche krotke - zamienilem ja na strukturke i dodalem do niej metody serializacji i deserializacji - /mj
-*/
+#include <iostream>
 
 namespace linda {
 	
-	//ta strukturka pozwala na wygodne zwracanie zserializowanych danych o krotce lub elemencie krotki
-	struct SerializedTuple
-	{
-		short length;
-		char* data;
-	};
+	using std::string;
 
 	class TupleElement {
 		public:
@@ -33,12 +22,11 @@ namespace linda {
 				var = *(float*)data_ptr;
 			}
 			
-			void loadTo(std::string& var) const {
+			void loadTo(string& var) const {
 				require(STRING);
-				var = *(std::string*)data_ptr;
+				var = *(string*)data_ptr;
 			}
-			
-			SerializedTuple serialize();
+
 
 			TupleElement(int var) : data_type(INT) {
 				data_ptr = (void*) new int(var);
@@ -50,9 +38,13 @@ namespace linda {
 				*(float*)data_ptr = var;
 			}
 			
-			TupleElement(std::string var) : data_type(STRING) {
-				data_ptr = new std::string(var);
-				*(std::string*)data_ptr = var;
+			TupleElement(string var) : data_type(STRING) {
+				data_ptr = new string(var);
+				*(string*)data_ptr = var;
+			}
+
+			EType getType() const {
+				return data_type;
 			}
 		
 			~TupleElement() {
@@ -72,6 +64,7 @@ namespace linda {
 			}
 			
 			
+
 		private:
 			void* data_ptr;
 			EType data_type;
@@ -90,7 +83,7 @@ namespace linda {
 						delete (float*)data_ptr;
 						break;
 					case STRING:
-						delete (std::string*)data_ptr;
+						delete (string*)data_ptr;
 						break;
 				}
 			}
@@ -104,45 +97,15 @@ namespace linda {
 						data_ptr = new float( *(float*)initializer.data_ptr );
 						break;
 					case STRING:
-						data_ptr = new std::string( *(std::string*)initializer.data_ptr );
+						data_ptr = new string( *(string*)initializer.data_ptr );
 						break;
 				}
 			}
 	};
-	//typedef std::vector<TupleElement> Tuple;
-	struct Tuple
-	{
-		SerializedTuple serialize();
-		void deserialize(int length, char* tuple);
-		std::vector<TupleElement> values;
+
+	class Tuple : public std::vector<TupleElement> {
+		public:
+			string serialize() const;
+			void deserialize(string) const;
 	};
 }
-
-
-/*
-#include <iostream>
-using namespace std;
-int main(...) {
-	linda::Tuple t;
-	
-	t.push_back(999);
-	string s = "qwerty";
-	t.push_back(s);
-	t.push_back(1.5f);
-	
-	//////////////////////
-	
-	int a;
-	string b;
-	float c;
-	t[0].loadTo(a);
-	t[1].loadTo(b);
-	t[2].loadTo(c);
-	
-	cout << a << b << c;
-	
-	//t[0].loadTo(c); //invalid_argument exception
-	
-	return 0;
-}
-//*/
