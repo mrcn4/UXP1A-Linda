@@ -105,6 +105,7 @@ namespace linda {
 
 	class Tuple : public std::vector<TupleElement> {
 		public:
+			typedef TupleElement::EType EType; //import EType
 			string serialize() const;
 			void deserialize(string) const;
 	};

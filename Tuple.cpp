@@ -2,7 +2,6 @@
 
 using namespace linda;
 using std::string;
-using linda::TupleElement::EType; //INT, STRING, FLOAT
 
 string Tuple::serialize() const {
 	string element_repr;

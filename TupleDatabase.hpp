@@ -1,20 +1,29 @@
-#include "Tuple.hpp"
 #include <vector>
+#include <string>
 
+#include "Tuple.hpp"
 
 namespace linda {
 
+	using std::vector;
+	using std::string;
+
 	/*
 	 * \biref database representation, allows to read, input (read with delete), output
+	 * TODO: synchronization
 	 */
 	class TupleDatabase {
 	public:
-		Tuple read() const;
-		Tuple input();
+		Tuple read(std::string query) const;
+		Tuple input(std::string query);
 		void output(const Tuple& tup);
 
 	private:
-		std::vector<Tuple> db;
+		vector<Tuple> db;
+	};
+
+	class TupleQuery {
+		vector<Tuple::EType> types;
 	};
 
 }
