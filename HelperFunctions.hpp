@@ -13,9 +13,12 @@
 // =====================================================================================
 
 #include	<string>
+#include	<vector>
 
 using std::string;
 
 namespace linda {
     string getSemName(int Pid,int SemNo);
+    void Tokenize(const string& str, std::vector<string>& tokens);
+
 }		// -----  end of namespace linda  -----
