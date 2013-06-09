@@ -36,8 +36,6 @@ namespace linda {
     				}
     				else {
     					//escaped "
-    					if(pos >= str.size())
-    						; //todo: error throw?
     					token.back() = str[pos]; //replace \ with "
     				}
     			} else
@@ -61,6 +59,9 @@ namespace linda {
 
     		++pos;
     	}
+
+    	if(in_string)
+    		throw std::logic_error("Parse query error, missing '\"' !");
 
     	//last token
     	if(token.size() > 0)
