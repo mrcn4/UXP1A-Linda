@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include "HelperFunctions.hpp"
 
 namespace linda {
 	
@@ -144,6 +145,7 @@ namespace linda {
 		public:
 			typedef TupleElement::EType EType; //import EType
 			string serialize() const;
-			void deserialize(string) const;
+			void deserialize(string);
 	};
+
 }
