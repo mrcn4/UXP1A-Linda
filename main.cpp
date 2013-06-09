@@ -87,33 +87,35 @@ int main(...) {
 	db.output(e);
 
 
-	Tuple res1 = db.input("INT == 5 INT == * INT < 10 STR == *");
-	Tuple res2 = db.read("INT == 5 INT == * INT < 10 STR == *");
+	Tuple res0 = db.read ("STR == * STR == * INT == * STR == *");
+
+	Tuple res1 = db.read("INT == 5 INT == * INT >= 7 STR == *");
+	Tuple res2 = db.input("INT == 5 INT == * INT < 10 STR == *");
 
 	Tuple res3 = db.input("STR == * STR == \"bbb\" INT == 5 STR == *");
-	Tuple res4 = db.input("STR == * STR == \"bbb\" INT == * STR == *");
+	Tuple res4 = db.input("STR == * STR ==   bbb   INT == * STR == *");
 
 	Tuple res5 = db.input("STR == * STR == * INT == * STR == *");
-	Tuple res6 = db.input("STR == * STR == * INT == * STR == *");
+
 
 	//show tuple names (last field)
-	string r1,r2,r3,r4,r5,r6;
+	string r0, r1,r2,r3,r4,r5;
+
+	res0[3].loadTo(r0);
 	res1[3].loadTo(r1);
 	res2[3].loadTo(r2);
 	res3[3].loadTo(r3);
 	res4[3].loadTo(r4);
 	res5[3].loadTo(r5);
-	res6[3].loadTo(r6);
 
+
+	cout << r0 << endl;
 	cout << r1 << endl;
 	cout << r2 << endl;
 	cout << r3 << endl;
 	cout << r4 << endl;
 	cout << r5 << endl;
-	cout << r6 << endl;
-
 
 	cout << db.read("STR == * STR == * INT == * STR == *").size() << endl;
-
-	//cout << db.read("STR == alfa").size() << endl;
+	cout << db.read("STR == alfa").size() << endl;
 }

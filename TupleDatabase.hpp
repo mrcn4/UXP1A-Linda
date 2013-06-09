@@ -16,22 +16,23 @@ namespace linda {
 	 */
 	class TupleDatabase {
 	public:
-		Tuple read(string query) const;
-		Tuple input(string query);
+		Tuple read(const string& query) const;
+		Tuple input(const string& query);
 		void output(const Tuple& tuple);
 
 	private:
 		vector<Tuple> db;
-		vector<Tuple>::iterator database_find(string& query) const;
-
 	};
 
-	//example query: INT > 5 STR == "alfa beta" STR == gamma FLOAT <= 5.2
+	/*
+	 * \biref parsed query representation
+	 * query  format: (TYPE OPERATOR VALUE)+
+	 * example query: INT > 5 STR == "alfa beta" STR == gamma FLOAT <= 5.2
+	 */
 	class TupleQuery {
 	public:
-
 		//checks if tuple match query (TupleQuery)
-		bool operator==(const Tuple& t);
+		bool operator==(const Tuple& t) const;
 
 		//c-tor
 		TupleQuery(string query);
@@ -43,5 +44,6 @@ namespace linda {
 		Tuple cond_values;
 	};
 
+	//translation: Tuple::operator==(TupleQuery) -> TupleQuery::operator==(Tuple)
 	bool operator==(const Tuple& t, const TupleQuery& q);
 }

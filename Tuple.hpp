@@ -94,6 +94,7 @@ namespace linda {
 						return comps( *(string*)(data_ptr), *(string*)(other.data_ptr) );
 				}
 
+				//assert(0);
 				return false; //unknown TupleElement EType
 			}
 			
@@ -108,7 +109,7 @@ namespace linda {
 			
 			void require(EType t) const {
 				if(data_type != t)
-					throw std::invalid_argument("var");
+					throw std::invalid_argument("Invalid loadTo() argument");
 			}
 			
 			void delete_data() {
