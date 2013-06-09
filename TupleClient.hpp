@@ -1,17 +1,3 @@
-// =====================================================================================
-// 
-//       Filename:  TupleClient.hpp
-// 
-//    Description:  Header of CTupleClient class
-// 
-//        Version:  1.0
-//        Created:  03.06.2013 16:26:21
-//       Revision:  none
-//       Compiler:  g++
-//         Author:  Marcin Swend (ms), M.Swend@mion.elka.pw.edu.pl
-// 
-// =====================================================================================
-
 #include "semaphore.h"
 #include "fcntl.h"
 #include "Semaphore.hpp"

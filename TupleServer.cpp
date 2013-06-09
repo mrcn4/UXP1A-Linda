@@ -1,17 +1,3 @@
-// =====================================================================================
-// 
-//       Filename:  TupleServer.cpp
-// 
-//    Description:  Implementation of class CTupleServer
-// 
-//        Version:  1.0
-//        Created:  03.06.2013 11:21:47
-//       Revision:  none
-//       Compiler:  g++
-//         Author:  Marcin Swend (ms), M.Swend@mion.elka.pw.edu.pl
-// 
-// =====================================================================================
-
 #include "TupleServer.hpp"
 #include "HelperFunctions.hpp"
 #include <iostream>

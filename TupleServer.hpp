@@ -1,18 +1,3 @@
-// =====================================================================================
-// 
-//       Filename:  TupleServer.hpp
-// 
-//    Description:  Header of class CTupleServer
-// 
-//        Version:  1.0
-//        Created:  03.06.2013 11:24:44
-//       Revision:  none
-//       Compiler:  g++
-//         Author:  Marcin Swend (ms), M.Swend@mion.elka.pw.edu.pl
-// 
-// =====================================================================================
-
-
 #include <vector>
 #include <iostream>
 

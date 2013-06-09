@@ -1,17 +1,3 @@
-// =====================================================================================
-// 
-//       Filename:  HelperFunctions.cpp
-// 
-//    Description:  Implementation of helper functions
-// 
-//        Version:  1.0
-//        Created:  03.06.2013 16:32:31
-//       Revision:  none
-//       Compiler:  g++
-//         Author:  Marcin Swend (ms), M.Swend@mion.elka.pw.edu.pl
-// 
-// =====================================================================================
-
 #include "HelperFunctions.hpp"
 
 namespace linda {
