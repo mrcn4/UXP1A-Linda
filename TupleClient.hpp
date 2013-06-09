@@ -23,14 +23,10 @@ namespace linda {
     class CTupleClient
     {
         public:
-
         // ====================  LIFECYCLE     =======================================
         CTupleClient ();                             // constructor
 
-        protected:
-
         private:
-
         sem_t* m_Sem1;
         sem_t* m_Sem2;
         int m_ReadFD;
