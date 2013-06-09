@@ -12,12 +12,10 @@
 // 
 // =====================================================================================
 
-
-#include <string>
-
-using std::string;
+#include "HelperFunctions.hpp"
 
 namespace linda {
+
     string getSemName(int Pid,int SemNo)
     {
         string ChildPidString = std::to_string(Pid);
@@ -83,6 +81,5 @@ namespace linda {
     		tokens.push_back(token);
     }
 
-    }
 
 }		// -----  end of namespace linda  -----

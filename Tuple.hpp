@@ -3,11 +3,20 @@
 #include <stdexcept> //std::invalid_argument
 #include <cstring>
 #include <iostream>
+#include <algorithm>
+#include <functional>
 
 namespace linda {
 	
 	using std::string;
+	using std::to_string;
 
+	using std::less;
+	using std::less_equal;
+	using std::equal_to;
+	using std::greater;
+	using std::greater_equal;
+	
 	class TupleElement {
 		public:
 			enum EType {INT, FLOAT, STRING};
@@ -29,49 +38,24 @@ namespace linda {
 
 
 			TupleElement(int var) : data_type(INT) {
-				data_ptr = (void*) new int(var);
-				*(int*)data_ptr = var;
+				data_ptr = new int(var);
 			}
 			
 			TupleElement(float var) : data_type(FLOAT) {
 				data_ptr = new float(var);
-				*(float*)data_ptr = var;
 			}
 			
-			TupleElement(string var) : data_type(STRING) {
+			TupleElement(const string& var) : data_type(STRING) {
 				data_ptr = new string(var);
-				*(string*)data_ptr = var;
+			}
+
+			TupleElement(const char* var) : data_type(STRING) {
+				data_ptr = new string(var);
 			}
 
 			EType getType() const {
 				return data_type;
 			}
-
-//			template<class T>
-//			bool compare(const TupleElement& other, bool (*compare_fun)(const T&, const T&) ) const {
-//				if(other.data_type != this->data_type) return false;
-//
-//				switch(data_type) {
-//					case INT:
-//						if( !compare_fun( *(int*)(data_ptr), *(int*)(other.data_ptr)) )
-//							return false;
-//						break;
-//					case FLOAT:
-//						if( !compare_fun( *(float*)(data_ptr), *(float*)(other.data_ptr)) )
-//							return false;
-//						break;
-//					case STRING:
-//						if( !compare_fun( *(string*)(data_ptr), *(string*)(other.data_ptr)) )
-//							return false;
-//						break;
-//				}
-//
-//				return true;
-//			}
-//
-//			bool operator==(const TupleElement* other) const {
-//				return compare(other, []())
-//			}
 
 		
 			~TupleElement() {
@@ -90,7 +74,33 @@ namespace linda {
 				return *this;
 			}
 			
+
+
+			template<template<class> class comparator>
+			bool compare(const TupleElement& other) const {
+				if(data_type != other.data_type) return false;
+
+				switch(data_type) {
+					case TupleElement::INT:
+						comparator<int> compi;
+						return compi( *(int*)(data_ptr), *(int*)(other.data_ptr) );
+
+					case TupleElement::FLOAT:
+						comparator<float> compf;
+						return compf( *(float*)(data_ptr), *(float*)(other.data_ptr) );
+
+					case TupleElement::STRING:
+						comparator<string> comps;
+						return comps( *(string*)(data_ptr), *(string*)(other.data_ptr) );
+				}
+
+				return false; //unknown TupleElement EType
+			}
 			
+			//example operator implementation using compare()
+			bool operator==(const TupleElement& other) const {
+				return compare<equal_to>(other);
+			}
 
 		private:
 			void* data_ptr;

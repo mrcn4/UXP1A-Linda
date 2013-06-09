@@ -23,6 +23,10 @@ string Tuple::serialize() const {
 				break;
 		}
 	}
+	
+	//...
+	
+	return element_repr;
 }
 
 
