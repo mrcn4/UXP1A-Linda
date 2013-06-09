@@ -13,9 +13,14 @@
 // =====================================================================================
 
 #include	<string>
-
-using std::string;
+#include	<vector>
 
 namespace linda {
+
+	using std::string;
+	using std::vector;
+
     string getSemName(int Pid,int SemNo);
+    void Tokenize(const string& str, std::vector<string>& tokens);
+
 }		// -----  end of namespace linda  -----
