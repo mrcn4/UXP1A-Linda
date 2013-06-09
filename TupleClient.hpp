@@ -14,21 +14,21 @@
 
 #include "semaphore.h"
 #include "fcntl.h"
-
+#include "Semaphore.hpp"
 
 namespace linda {
     /**
      * \brief Class used for communicating with TupleServer
      */
-    class CTupleClient
+    class TupleClient
     {
         public:
         // ====================  LIFECYCLE     =======================================
-        CTupleClient ();                             // constructor
+        TupleClient ();                             // constructor
 
         private:
-        sem_t* m_Sem1;
-        sem_t* m_Sem2;
+        Semaphore* m_Sem1;
+        Semaphore* m_Sem2;
         int m_ReadFD;
         int m_WriteFD;
 

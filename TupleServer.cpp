@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #include <pthread.h>
+#include "PosixSemaphore.hpp"
 
 using std::string;
 using std::cout;
@@ -27,7 +28,7 @@ using std::endl;
 #define WRITE 1
 
     void
-linda::CTupleServer::init ( vector<string> ChildrenProcesses, vector<char**> ChildrenArgs )
+linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> ChildrenArgs )
 {
     for(auto it = ChildrenProcesses.begin(); it != ChildrenProcesses.end(); ++it)
     {
@@ -73,19 +74,18 @@ linda::CTupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chi
             string Sem1Name = getSemName(ChildPid,1);
             string Sem2Name = getSemName(ChildPid,2);  
             cout << Sem1Name << endl;
-            sem_t* Sem1 = sem_open(Sem1Name.c_str(),O_CREAT,S_IRUSR | S_IWUSR,1);
-            if(Sem1 == SEM_FAILED) {
+            try
+            {
+                Semaphore* Sem1 = new PosixSemaphore(Sem1Name.c_str(),O_CREAT,S_IRUSR | S_IWUSR,1);
+                Semaphore* Sem2 = new PosixSemaphore(Sem2Name.c_str(),O_CREAT,S_IRUSR | S_IWUSR,1);
+                m_Sem1.push_back(Sem1);
+                m_Sem2.push_back(Sem2);
+            }
+            catch(...)
+            {
                 cout << "Error creating semaphore!" << endl;
                 return;
             }
-
-            sem_t* Sem2 = sem_open(Sem2Name.c_str(),O_CREAT,S_IRUSR | S_IWUSR,1);
-            if(Sem2 == SEM_FAILED) {
-                cout << "Error creating semaphore!" << endl;
-                return;
-            }
-            m_Sem1.push_back(Sem1);
-            m_Sem2.push_back(Sem2);
         } //end parent case
         else
         {
@@ -130,7 +130,7 @@ main ( int argc, char *argv[] )
         cout	<< "You should provide name of program to launch (for example absolute 'client' path from make)" << endl;
     }
 
-    linda::CTupleServer Cts;
+    linda::TupleServer Cts;
     vector<string> Vs;
     char* c_LsChar = argv[1];
     Vs.push_back(c_LsChar);

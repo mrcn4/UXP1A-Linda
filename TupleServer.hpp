@@ -19,6 +19,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
+#include "Semaphore.hpp"
+
 using std::vector;
 using std::string;
 
@@ -27,7 +29,7 @@ namespace linda {
     /**
      * \brief Class  which creates clients and proceses their requests 
      */
-    class CTupleServer 
+    class TupleServer
     {
         public:
         /**
@@ -42,7 +44,7 @@ namespace linda {
         private:
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;
-        vector<sem_t* > m_Sem1;
-        vector<sem_t* > m_Sem2;
+        vector<Semaphore*> m_Sem1;
+        vector<Semaphore*> m_Sem2;
     };
 }		// -----  end of namespace linda  -----

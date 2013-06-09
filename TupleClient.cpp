@@ -19,24 +19,20 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/resource.h>
+#include "PosixSemaphore.hpp"
 
 using std::cout;
 using std::endl;
 using std::string;
 
-linda::CTupleClient::CTupleClient (): m_ReadFD(RLIMIT_NOFILE-2), m_WriteFD(RLIMIT_NOFILE-1)
+linda::TupleClient::TupleClient (): m_ReadFD(RLIMIT_NOFILE-2), m_WriteFD(RLIMIT_NOFILE-1)
 {
     //open semaphore
     string Sem1Name = getSemName(getpid(),1);
     string Sem2Name = getSemName(getpid(),2);
     
-    m_Sem1 = sem_open(Sem1Name.c_str(),0);
-    if(m_Sem1 == SEM_FAILED)
-        throw std::logic_error("Server not started or semaphore error");
-
-    m_Sem2 = sem_open(Sem2Name.c_str(),0); 
-    if(m_Sem2 == SEM_FAILED)
-        throw std::logic_error("Server not started or semaphore error");
+    m_Sem1 = new PosixSemaphore(Sem1Name.c_str(),0);
+    m_Sem1 = new PosixSemaphore(Sem2Name.c_str(),0);
 
     //send sth through pipe
     char buf = 'k';
@@ -48,7 +44,7 @@ main ( int argc, char *argv[] )
 {   
     try
     {
-        linda::CTupleClient Ctc;
+        linda::TupleClient Ctc;
     }
     catch(std::logic_error& e)
     {
