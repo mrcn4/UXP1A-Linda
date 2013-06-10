@@ -14,19 +14,14 @@
 #include <cstring>
 #include "errno.h"
 #include "Globals.hpp"
+#include <random>
 
 using std::cout;
 using std::endl;
 using std::string;
 using linda::Tuple;
 
-
-int is_valid_fd(int fd)
-{
-    return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
-}
-
-linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_MaxFDExclusive-2), m_WriteFD(Globals::c_MaxFDExclusive-1), m_Tag(0)
+linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globals::c_WriteFD), m_Tag(0)
 {
     //open semaphore
     string Sem1Name = getSemName(getpid(),1);
@@ -44,11 +39,26 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_MaxFDExclusive-2), m_Wri
         cout <<"ERROR: twój deskryptor jest inwalidą\n";
     }
 
-
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> unif(0,5);
     //send sth through pipe
-    //char buf = 'k';
-    //write(m_WriteFD,&buf,1);
-    input(string("test"));
+    for(int i=0;i<3;++i)
+    {
+        int sleepVal = unif(generator);
+        sleep(sleepVal);
+        int inputChoice = unif(generator);
+        switch(inputChoice)
+        {
+        case 0:
+            input(string("INT == * INT == * INT == *"));
+        case 1:
+            input(string("INT == * INT == *"));
+        case 2:
+            input(string("STR == *"));
+        }
+    }
+
+
 }
 
 
@@ -57,7 +67,7 @@ Tuple linda::TupleClient::input(std::string pattern)
     //send message to server
     m_Msg.id = EMessageType::INPUT;
     m_Msg.tag = m_Tag++;
-    m_Msg.length = pattern.length()+1;//header len + data length
+    m_Msg.length = pattern.length()+1; //string length + \0 character
     strcpy(m_Msg.data,pattern.c_str());
     write(m_WriteFD,&m_Msg,sizeof(MessageHeader) + m_Msg.length);
 
@@ -71,7 +81,7 @@ Tuple linda::TupleClient::input(std::string pattern)
     FD_SET(m_ReadFD, &set); // add our file descriptor to the set
 
     //set timeout to 10 seconds
-    timeout.tv_sec = 10;
+    timeout.tv_sec = Globals::c_ClientTimeoutSeconds;
     timeout.tv_usec = 0;
 
     //1st arg of select is "the highest-numbered file descriptor in any of the three sets, plus 1."
@@ -79,12 +89,13 @@ Tuple linda::TupleClient::input(std::string pattern)
 
     if(rv == -1)
     {
-        cout <<"Select fatal error. errno of select is " <<errno;
-        if(errno == EBADF)
-        {
-            cout <<"(EBADF)";
-        }
         //select error
+
+        //select debug info
+        cout <<"Select fatal error. errno of select is " <<errno;
+        if(errno == EBADF) cout <<"(EBADF)";
+        cout<<endl;
+
         m_Sem1->unlock();
         return Tuple(); //return false
     }
@@ -103,12 +114,18 @@ Tuple linda::TupleClient::input(std::string pattern)
         {
             if(m_Msg.id == EMessageType::TUPLE_RETURN)
             {
-                 read(m_ReadFD,&m_Msg+sizeof(MessageHeader),m_Msg.length);
+                 bool ReadSuccess = (read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
+                 Tuple t;
+                 if(ReadSuccess)
+                 {
+                     t.deserialize(string(m_Msg.data));
+                 }
                  //TODO: error handle, tuple read, deserialize and return it
                  m_Sem2->unlock();
-                 return Tuple()/* read_tuple()*/;
-
+                 return t;
             }
+
+            //else if server error..
         }
         else{
             //send_cancel_request()
@@ -117,17 +134,18 @@ Tuple linda::TupleClient::input(std::string pattern)
     }
     else
     {
-        Message Msg;
         //good selection
-        read( m_ReadFD, &Msg, sizeof(MessageHeader));
-        //if good then good TODO:check if return tuple
-        read( m_ReadFD, &Msg+sizeof(MessageHeader), Msg.length);
+        read( m_ReadFD, &m_Msg, sizeof(MessageHeader));
 
-        //deserialize tuple
-        // HERE
+        //if good then good TODO:check if return tuple
+        read( m_ReadFD, &m_Msg.data, m_Msg.length);
+
+        Tuple Returned;
+        Returned.deserialize(string(m_Msg.data));
+        cout<<"Client received a beautiful Tuple: "<<Returned.serialize()<<endl;
 
         m_Sem1->unlock();
-        return Tuple(); //TODO:deserialize
+        return Returned; //TODO:deserialize
     }
 }
 
@@ -145,7 +163,7 @@ main ( int argc, char *argv[] )
         cout	<< e.what() << endl;
         return EXIT_FAILURE;
     }
-    cout	<< "Koniec pracy klienta, sukces." << endl;
+    cout	<< "! Klient zakończył działanie powodzeniem. (Stwierdzam śmierć bo umar.)" << endl;
 
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------

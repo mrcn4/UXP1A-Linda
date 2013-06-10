@@ -1,3 +1,6 @@
+#ifndef TUPLE_HPP
+#define TUPLE_HPP
+
 #include <vector>
 #include <string>
 #include <stdexcept> //std::invalid_argument
@@ -150,3 +153,5 @@ namespace linda {
 	};
 
 }
+
+#endif //TUPLE_HPP

@@ -1,4 +1,5 @@
 #include "HelperFunctions.hpp"
+#include <fcntl.h>
 
 namespace linda {
 
@@ -65,7 +66,12 @@ namespace linda {
 
     	//last token
     	if(token.size() > 0)
-    		tokens.push_back(token);
+            tokens.push_back(token);
+    }
+
+    int is_valid_fd(int fd)
+    {
+        return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
     }
 
 

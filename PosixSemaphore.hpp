@@ -21,6 +21,8 @@ namespace linda
 
 
     private:
+        PosixSemaphore(const PosixSemaphore&);
+        PosixSemaphore& operator=( const PosixSemaphore& other );
         sem_t* m_sem;
     };
 }

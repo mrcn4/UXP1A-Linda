@@ -34,9 +34,9 @@ string Tuple::serialize() const {
 				{
 					if(vals[i] == '\"') 
 					{
-						std::cout << "\"" << std::endl;
+                        //std::cout << "\"" << std::endl;
 						vals.insert(i, "\\");
-						std::cout << vals << std::endl;
+                        //std::cout << vals << std::endl;
 						++i;
 					}
 				}
@@ -44,7 +44,7 @@ string Tuple::serialize() const {
 				element_repr += "\" ";
 				break;
 		}
-		std::cout << element_repr << std::endl;
+        //std::cout << element_repr << std::endl;
 	}
 
 	return element_repr;

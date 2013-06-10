@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include "Semaphore.hpp"
 #include "Message.hpp"
+#include "TupleDatabase.hpp"
 
 using std::vector;
 using std::string;
@@ -27,11 +28,14 @@ namespace linda {
         void init(vector<string> ChildrenProcesses, vector<char**> ChildrenArgs );
         
         private:
+        void handle_insert(int ClientNo);
+
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;
         vector<Semaphore*> m_Sem1;
         vector<Semaphore*> m_Sem2;
         Message m_Msg;
+        TupleDatabase m_DB;
 
     };
 }		// -----  end of namespace linda  -----

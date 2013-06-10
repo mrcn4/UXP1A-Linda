@@ -1,3 +1,6 @@
+#ifndef TUPLECLIENT_HPP
+#define TUPLECLIENT_HPP
+
 #include "semaphore.h"
 #include "fcntl.h"
 #include "Semaphore.hpp"
@@ -29,3 +32,5 @@ namespace linda {
         
     }; // -----  end of class CTupleClient  -----
 }		// -----  end of namespace linda  -----
+
+#endif

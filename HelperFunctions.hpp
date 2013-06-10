@@ -12,7 +12,7 @@ namespace linda {
 
     string getSemName(int Pid,int SemNo);
     void Tokenize(const string& str, std::vector<string>& tokens);
-
+    int is_valid_fd(int fd);
 }		// -----  end of namespace linda  -----
 
 #endif
