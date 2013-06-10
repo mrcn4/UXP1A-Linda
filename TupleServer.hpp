@@ -3,8 +3,8 @@
 
 #include <semaphore.h>
 #include <fcntl.h>
-
 #include "Semaphore.hpp"
+#include "Message.hpp"
 
 using std::vector;
 using std::string;
@@ -31,5 +31,7 @@ namespace linda {
         vector<int> m_OutputPipes;
         vector<Semaphore*> m_Sem1;
         vector<Semaphore*> m_Sem2;
+        Message m_Msg;
+
     };
 }		// -----  end of namespace linda  -----

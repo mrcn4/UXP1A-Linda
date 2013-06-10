@@ -5,6 +5,7 @@
 #include <sys/resource.h>
 #include <pthread.h>
 #include "PosixSemaphore.hpp"
+#include "errno.h"
 
 using std::string;
 using std::cout;
@@ -58,8 +59,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
             close(PipeDOut[READ]);
             
             string Sem1Name = getSemName(ChildPid,1);
-            string Sem2Name = getSemName(ChildPid,2);  
-            cout << Sem1Name << endl;
+            string Sem2Name = getSemName(ChildPid,2);
             try
             {
                 Semaphore* Sem1 = new PosixSemaphore(Sem1Name.c_str(),O_CREAT,S_IRUSR | S_IWUSR,1);
@@ -87,10 +87,26 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }//end child case
 
         //test read from buffer
-        char buf = 0;
-        if(read(PipeDIn[READ],&buf,1)>0)
+        if(read(PipeDIn[READ],&m_Msg,sizeof(MessageHeader)) == sizeof(MessageHeader))
         {
-            cout << buf << endl;
+            cout << "    Server: received a message"<<endl;
+            cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+            cout << "    m_Msg.length: " << m_Msg.length <<endl;
+            cout << "    ((bool)m_Msg.id==EMessageType::INPUT): " << ((bool)m_Msg.id==EMessageType::INPUT) << endl;
+
+            int rv = read(PipeDIn[READ],&m_Msg.data,m_Msg.length);
+            if(rv == -1)
+            {
+                cout << "errno is: " << errno ;
+                if(errno == EAGAIN)
+                    cout <<"(EAGAIN)" ;
+                if(errno == EBADF)
+                    cout <<"(EAGAIN)" ;
+                if(errno == EFAULT)
+                    cout <<"(EAGAIN)" ;
+                cout <<endl;
+            }
+            cout <<"Read returned: " << rv << ". Data is: " << m_Msg.data << endl;
         }
         else
         {
