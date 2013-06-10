@@ -16,13 +16,14 @@ namespace linda {
      */
     class TupleClient
     {
-        public:
+    public:
         // ====================  LIFECYCLE     =======================================
         TupleClient ();                             // constructor
-
+        ~TupleClient ();
         Tuple input(string inputTuple);
+        bool output(const Tuple& tuple);
 
-        private:
+    private:
         Semaphore* m_Sem1;
         Semaphore* m_Sem2;
         int m_ReadFD;

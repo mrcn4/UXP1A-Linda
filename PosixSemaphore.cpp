@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <ctime>
 #include <errno.h>
+#include <iostream>
 
 linda::PosixSemaphore::PosixSemaphore(const char* name, int flags ,mode_t mode, int value)
 {

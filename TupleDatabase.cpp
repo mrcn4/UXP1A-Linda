@@ -22,8 +22,8 @@ Tuple linda::TupleDatabase::input(const TupleQuery &tq) {
 	if(it == db.end())
 			return Tuple();
 
-	Tuple result = *it;
-	db.erase(it);
+    Tuple result = *it;
+    db.erase(it);
 	return result;
 }
 

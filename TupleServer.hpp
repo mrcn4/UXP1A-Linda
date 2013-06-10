@@ -28,7 +28,9 @@ namespace linda {
         void init(vector<string> ChildrenProcesses, vector<char**> ChildrenArgs );
         
         private:
-        void handle_insert(int ClientNo);
+        void handle_input(int ClientNo);
+        void handle_output(int ClientNo);
+        bool sendTupleIfStillRequested(int ClientNo, Tuple& t);
 
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;
