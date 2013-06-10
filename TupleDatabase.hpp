@@ -11,20 +11,6 @@ namespace linda {
 	using std::pair;
 
 	/*
-	 * \biref database representation, allows to read, input (read with delete), output
-	 * TODO: synchronization
-	 */
-	class TupleDatabase {
-	public:
-		Tuple read(const string& query) const;
-		Tuple input(const string& query);
-		void output(const Tuple& tuple);
-
-	private:
-		vector<Tuple> db;
-	};
-
-	/*
 	 * \biref parsed query representation
 	 * query  format: (TYPE OPERATOR VALUE)+
 	 * example query: INT > 5 STR == "alfa beta" STR == gamma FLOAT <= 5.2
@@ -35,6 +21,7 @@ namespace linda {
 		bool operator==(const Tuple& t) const;
 
 		//c-tor
+		TupleQuery(){};
 		TupleQuery(string query);
 
 	private:
@@ -42,6 +29,22 @@ namespace linda {
 
 		vector<ECondition> conditions; //due to pair<enum, something> is invalid
 		Tuple cond_values;
+	};
+
+	/*
+	 * \biref database representation, allows to read, input (read with delete), output
+	 * TODO: synchronization
+	 */
+	class TupleDatabase {
+	public:
+		//Tuple read(const string& query) const;
+		//Tuple input(const string& query);
+		Tuple read(const TupleQuery &tq) const;
+		Tuple input(const TupleQuery &tq);
+		void output(const Tuple& tuple);
+
+	private:
+		vector<Tuple> db;
 	};
 
 	//translation: Tuple::operator==(TupleQuery) -> TupleQuery::operator==(Tuple)
