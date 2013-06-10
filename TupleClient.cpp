@@ -13,13 +13,20 @@
 #include <sys/select.h>
 #include <cstring>
 #include "errno.h"
+#include "Globals.hpp"
 
 using std::cout;
 using std::endl;
 using std::string;
 using linda::Tuple;
 
-linda::TupleClient::TupleClient (): m_ReadFD(RLIMIT_NOFILE-2), m_WriteFD(RLIMIT_NOFILE-1), m_Tag(0)
+
+int is_valid_fd(int fd)
+{
+    return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
+}
+
+linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_MaxFDExclusive-2), m_WriteFD(Globals::c_MaxFDExclusive-1), m_Tag(0)
 {
     //open semaphore
     string Sem1Name = getSemName(getpid(),1);
@@ -28,12 +35,22 @@ linda::TupleClient::TupleClient (): m_ReadFD(RLIMIT_NOFILE-2), m_WriteFD(RLIMIT_
     m_Sem1 = new PosixSemaphore(Sem1Name.c_str(),0);
     m_Sem1 = new PosixSemaphore(Sem2Name.c_str(),0);
 
+    if(is_valid_fd(m_ReadFD) && is_valid_fd(m_WriteFD))
+    {
+        //cout <<"twój deskryptor jest ok\n";
+    }
+    else
+    {
+        cout <<"ERROR: twój deskryptor jest inwalidą\n";
+    }
+
+
     //send sth through pipe
     //char buf = 'k';
     //write(m_WriteFD,&buf,1);
-    sleep(1);
     input(string("test"));
 }
+
 
 Tuple linda::TupleClient::input(std::string pattern)
 {
@@ -42,7 +59,6 @@ Tuple linda::TupleClient::input(std::string pattern)
     m_Msg.tag = m_Tag++;
     m_Msg.length = pattern.length()+1;//header len + data length
     strcpy(m_Msg.data,pattern.c_str());
-    cout<<"m_Msg.data is "<<m_Msg.data<<endl;
     write(m_WriteFD,&m_Msg,sizeof(MessageHeader) + m_Msg.length);
 
     m_Sem1->lock();
@@ -54,20 +70,20 @@ Tuple linda::TupleClient::input(std::string pattern)
     FD_ZERO(&set); // clear the set
     FD_SET(m_ReadFD, &set); // add our file descriptor to the set
 
-    //set timeout to one second
+    //set timeout to 10 seconds
     timeout.tv_sec = 10;
     timeout.tv_usec = 0;
 
     //1st arg of select is "the highest-numbered file descriptor in any of the three sets, plus 1."
     rv = select(m_ReadFD + 1, &set, NULL, NULL, &timeout);
-    cout<<"select returned>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "<< rv <<endl;
-    cout <<"errno of select is " <<errno <<endl;
-    if(errno == EBADF)
-    {
-        cout <<"errno of select is EBADF" <<endl;
-    }
+
     if(rv == -1)
     {
+        cout <<"Select fatal error. errno of select is " <<errno;
+        if(errno == EBADF)
+        {
+            cout <<"(EBADF)";
+        }
         //select error
         m_Sem1->unlock();
         return Tuple(); //return false
@@ -129,7 +145,6 @@ main ( int argc, char *argv[] )
         cout	<< e.what() << endl;
         return EXIT_FAILURE;
     }
-sleep(4);
     cout	<< "Koniec pracy klienta, sukces." << endl;
 
     return EXIT_SUCCESS;

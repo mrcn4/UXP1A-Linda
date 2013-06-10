@@ -1,3 +1,6 @@
+#ifndef HELPERFUNCTIONS_HPP
+#define HELPERFUNCTIONS_HPP
+
 #include	<string>
 #include	<vector>
 #include 	<stdexcept>
@@ -11,3 +14,5 @@ namespace linda {
     void Tokenize(const string& str, std::vector<string>& tokens);
 
 }		// -----  end of namespace linda  -----
+
+#endif
