@@ -10,6 +10,7 @@ namespace linda
         virtual void unlock() = 0;
         virtual bool isLocked() = 0;
         virtual bool timedLock(int Miliseconds) = 0;
+        virtual ~Semaphore() {}
     };
 
 }

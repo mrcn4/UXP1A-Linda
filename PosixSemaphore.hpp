@@ -11,12 +11,14 @@ namespace linda
     public:
         PosixSemaphore(const char* Name, int Flags, mode_t Mode, int Value);
         PosixSemaphore(const char* Name, int Flags);
+        virtual ~PosixSemaphore();
 
         //Semaphore interface implementation
         void lock();
         void unlock();
         bool isLocked();
         bool timedLock(int Miliseconds);
+
 
     private:
         sem_t* m_sem;

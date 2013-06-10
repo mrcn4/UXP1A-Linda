@@ -19,6 +19,11 @@ linda::PosixSemaphore::PosixSemaphore(const char* name, int flags)
     {
         throw std::logic_error("sem_open failed!");
     }
+}
+
+linda::PosixSemaphore::~PosixSemaphore()
+{
+    sem_close(m_sem);
 }\
 
 void linda::PosixSemaphore::lock()
