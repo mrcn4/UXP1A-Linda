@@ -3,32 +3,77 @@
 using namespace linda;
 using std::string;
 
+
+/*
+funkcja serializujaca pojedyncza krotke do stringa
+*/
 string Tuple::serialize() const {
-	string element_repr;
+	string element_repr = "";
 
 	for(auto it : *this) {
 		switch(it.getType()) {
 			case EType::INT:
 				int vali;
 				it.loadTo(vali);
-				element_repr = to_string(vali);
+				element_repr += "I \"";
+				element_repr += to_string(vali);
+				element_repr += "\" ";
 				break;
 			case EType::FLOAT:
 				float valf;
 				it.loadTo(valf);
-				element_repr = to_string(valf);
+				element_repr += "F \"";
+				element_repr += to_string(valf);
+				element_repr += "\" ";
 				break;
 			case EType::STRING:
-				it.loadTo(element_repr);
+				string vals;
+				element_repr += "S \"";
+				it.loadTo(vals);
+				for(unsigned int i = 0; i < vals.length(); ++i)
+				{
+					if(vals[i] == '\"') 
+					{
+						std::cout << "\"" << std::endl;
+						vals.insert(i, "\\");
+						std::cout << vals << std::endl;
+						++i;
+					}
+				}
+				element_repr += vals;
+				element_repr += "\" ";
 				break;
 		}
+		std::cout << element_repr << std::endl;
 	}
-	
-	//...
-	
+
 	return element_repr;
 }
 
+/*
+funkcja deserializujaca podana krotke ze stringa wolana na rzecz obiektu do ktorego bedzie zapisywany wynik deserializacji
+*/
+void Tuple::deserialize(string serialTuple)
+{
+	vector<string> tokenTuple;
+	Tokenize(serialTuple, tokenTuple);
+	for(unsigned int i = 0; i < tokenTuple.size(); ++i)
+	{
+		if(!tokenTuple[i].compare("I"))
+		{
+			if(++i < tokenTuple.size()) push_back(std::stoi(tokenTuple[i]));
+		}
+		else if(!tokenTuple[i].compare("F"))
+		{
+			if(++i < tokenTuple.size()) push_back(std::stof(tokenTuple[i]));
+		}
+		else if(!tokenTuple[i].compare("S"))
+		{
+			if(++i < tokenTuple.size()) push_back(tokenTuple[i]);
+		}
+		else throw std::invalid_argument("Invalid type");
+	}
+}
 
 //
 ///*
