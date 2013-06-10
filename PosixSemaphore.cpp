@@ -25,7 +25,7 @@ linda::PosixSemaphore::PosixSemaphore(const char* name, int flags)
 linda::PosixSemaphore::~PosixSemaphore()
 {
     sem_close(m_sem);
-}\
+}
 
 void linda::PosixSemaphore::lock()
 {

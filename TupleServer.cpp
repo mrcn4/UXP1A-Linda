@@ -32,22 +32,6 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         return;
     }
 
-    //add test data to DB
-    Tuple t;
-    t.push_back(1);
-    t.push_back(2);
-    m_DB.output(t); // 1, 2
-
-    t.push_back(3);
-    m_DB.output(t); // 1, 2,3
-
-    t.push_back(5.0f);
-    m_DB.output(t); // 1, 2, 3, 5.0
-
-    t.clear();
-    t.push_back("asd");
-    m_DB.output(t); // "asd"
-
     //run processes
     Semaphore* CreationSemaphore= new PosixSemaphore("linda_creationSem",O_CREAT,S_IRUSR | S_IWUSR,1);
     auto it = ChildrenProcesses.begin();
@@ -57,7 +41,6 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         int PipeDOut[2];
         int PipeDIn[2];
         int ChildPid;
-
 
         if(pipe(PipeDOut) < 0)
         {
@@ -119,41 +102,42 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
     }
 
     //begin processing events: enter infinite loop
-
     bool LongLiveTheServer = true;
     while(LongLiveTheServer)
     {
-
         //select preparation
         fd_set set;
         int rv; //select return value
-        int max_fd =0;
+        int max_fd =-1; //dynamic for fd can change and its cost is low
         FD_ZERO(&set); // clear the set
         for(int ReadFd : m_InputPipes)
         {
             if(ReadFd>max_fd) max_fd = ReadFd;
             FD_SET(ReadFd, &set); // add file descriptor to the set
         }
+        if(max_fd == -1)
+        {
+            cout<<"All clients disconnected"<<endl;
+            return;
+        }
         //endof select preparation
 
         //1st arg: "the highest-numbered file descriptor in any of the three sets, plus 1."
-        //2nd arg: read set
-        //3rd arg: write set (0 FD)
-        //4th arg: alarm set (0 FD)
+        //2nd arg: read set; 3rd arg: write set (0 FD); 4th arg: alarm set (0 FD)
         //5th arg: timeout (no timeout - till infinity)
-        rv = select(max_fd + 1, &set, NULL, NULL, NULL); //no write desc, no alarm desc, no timeout
-
-        if (rv == -1 || rv == 0)
+        rv = select(max_fd + 1, &set, NULL, NULL, NULL);
+        cout<<"Server select finish\n";
+        if (rv <= 0)
         {
-            cout<<"server select error";
-            return;
+            cout<<"Server select unexpected error\n";
         }
         int clientCount = 0;
         for(int ReadFd : m_InputPipes)
         {
             if(FD_ISSET(ReadFd, &set))
             {
-                if(read(ReadFd,&m_Msg,sizeof(MessageHeader)) == sizeof(MessageHeader))
+                int rv;
+                if((rv = read(ReadFd,&m_Msg,sizeof(MessageHeader))) == sizeof(MessageHeader))
                 {
                     //decide of program flow based on incomming message type
                     switch(m_Msg.id)
@@ -165,15 +149,28 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                             handle_output(clientCount);
                         break;
                         case EMessageType::CANCEL_REQUEST:
-                            cout<<"Sever msg: CANCEL_REQUEST not implemented";
+                            handle_cancel(clientCount);
                         break;
                         case EMessageType::READ:
-                            cout<<"Sever msg: READ not implemented";
+                            handle_read(clientCount);
                         break;
                         default:
                             cout<<"Sever error: undefined message type";
                             return;
                     }
+                }
+                else
+                {
+                    close(m_InputPipes[clientCount]);
+                    close(m_OutputPipes[clientCount]);
+                    delete(m_Sem1[clientCount]);
+                    delete(m_Sem2[clientCount]);
+
+                    //remove
+                    m_InputPipes.erase(m_InputPipes.begin()+clientCount);
+                    m_OutputPipes.erase(m_OutputPipes.begin()+clientCount);
+                    m_Sem1.erase(m_Sem1.begin()+clientCount);
+                    m_Sem2.erase(m_Sem2.begin()+clientCount);
                 }
             }
             ++clientCount;
@@ -184,8 +181,6 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
 
 void linda::TupleServer::handle_input(int ClientNo)
 {
-    //in reality, uses read.
-
     cout << "\n  Server: received input message"<<endl;
     cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
     cout << "    m_Msg.length: " << m_Msg.length <<endl;
@@ -204,7 +199,8 @@ void linda::TupleServer::handle_input(int ClientNo)
         {
             //mutex needed if mt-server
             string query = string(m_Msg.data);
-            Tuple t = m_DB.input(query);
+            TupleQuery tq(query);
+            Tuple t = m_DB.input(tq);
             if(t.size()>0)
             {
                 bool Result = sendTupleIfStillRequested(ClientNo,t);
@@ -217,18 +213,91 @@ void linda::TupleServer::handle_input(int ClientNo)
             else
             {
                 cout<<"can't be sat now\n";
-                //TODO: zachowaj gdzieś na później
+                ParsedRequest pr;
+                pr.clientId = ClientNo;
+                pr.id=m_Msg.id;
+                pr.tag=m_Msg.tag;
+                pr.tq = tq;
+                m_Requests.push_back(pr);
             }
         }
     }
 
 }
 
+void linda::TupleServer::handle_read(int ClientNo)
+{
+    cout << "\n  Server: received read message"<<endl;
+    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+    cout << "    m_Msg.length: " << m_Msg.length <<endl;
+
+    int rv = read(m_InputPipes[ClientNo],&m_Msg.data,m_Msg.length);
+    if(rv == -1)
+    {
+        cout << "Read test data failed. Errno is: " << errno ;
+    }
+    else if (rv == m_Msg.length)
+    {
+        //valid input request.
+        cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
+
+        //if can be satisied now, do it now (unsynchonized on DB level)
+        {
+            //mutex needed if mt-server
+            string query = string(m_Msg.data);
+            TupleQuery tq;
+            try
+            {
+                tq = TupleQuery(query);
+            }
+            catch(std::logic_error)
+            {
+                //wrong pattern
+                m_Msg.id = EMessageType::WRONG_PATTERN;
+                m_Msg.length=0;
+                int rv = write(m_OutputPipes[ClientNo],&m_Msg.data,m_Msg.messageSize());
+                return;
+            }
+
+            Tuple t = m_DB.read(tq);
+            if(t.size()>0)
+            {
+                bool Result = sendTupleIfStillRequested(ClientNo,t);
+            }
+            else
+            {
+                cout<<"can't be sat now\n";
+
+                ParsedRequest pr;
+                pr.clientId = ClientNo;
+                pr.id=m_Msg.id;
+                pr.tag=m_Msg.tag;
+                pr.tq = tq;
+                m_Requests.push_back(pr);
+            }
+        }
+    }
+}
+
+void linda::TupleServer::handle_cancel(int ClientNo)
+{
+    cout << "\n  Server: received cancel message"<<endl;
+    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+    cout << "    m_Msg.length: " << m_Msg.length <<endl;
+
+    auto i = std::begin(m_Requests);
+    while (i != std::end(m_Requests)) {
+        if(i->clientId == ClientNo)
+        {
+            m_Requests.erase(i);
+            break;
+        }
+    }
+
+}
 
 void linda::TupleServer::handle_output(int ClientNo)
 {
-    //in reality, uses read.
-
     cout << "\n  Server: received output message"<<endl;
     cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
     cout << "    m_Msg.length: " << m_Msg.length <<endl;
@@ -245,11 +314,63 @@ void linda::TupleServer::handle_output(int ClientNo)
 
         {
             Tuple t;
-            t.deserialize(string(m_Msg.data));
+            try{
+                t.deserialize(string(m_Msg.data));
+            }
+            catch(std::invalid_argument)
+            {
+                //ack output
+                m_Msg.id = EMessageType::OUTPUT_ERROR;
+                m_Msg.length = 0;
+                //tag is the same
+                write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
+            }
+
             m_DB.output(t);
+
+            //ack output
+            m_Msg.id = EMessageType::OUTPUT_ACK;
+            m_Msg.length = 0;
+            //tag is the same
+            write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
+
+            //redo all queries (TODO: should be before output and only new typle with requests)
+            auto i = std::begin(m_Requests);
+            while (i != std::end(m_Requests)) {
+                if(i->id == EMessageType::INPUT)
+                {
+                    Tuple t = m_DB.input(i->tq);
+                    if(t.size()>0)
+                    {
+                        //tuple found
+                        bool Result = sendTupleIfStillRequested(i->clientId,t);
+                        if(false == Result)
+                        {
+                            m_DB.output(t);
+                        }
+                        i = m_Requests.erase(i);
+                        continue;
+                    }
+                }
+                else if(i->id == EMessageType::READ)
+                {
+                    Tuple t = m_DB.read(i->tq);
+                    if(t.size()>0)
+                    {
+                        sendTupleIfStillRequested(i->clientId,t);
+                        i = m_Requests.erase(i);
+                        continue;
+                    }
+                }
+                else
+                {
+                    cout<<"Wrong message type in requests." << endl;
+                }
+
+                ++i;
+            }
         }
     }
-
 }
 
 
@@ -267,13 +388,18 @@ bool linda::TupleServer::sendTupleIfStillRequested(int ClientNo, linda::Tuple &t
 
     if(readRV == sizeof(MessageHeader))
     {
-        cout<<"Cancelled;"<<endl;
+        cout<<"Cancelled?"<<endl;
         //new message received!
         if(m_Msg.id == EMessageType::CANCEL_REQUEST)
         {
             //ewidentnie cancel.
             cout<<"Cancelled;"<<endl;
         }
+        else
+        {
+            cout<<"sth different"<<endl;
+        }
+        returnValue = false;
     }
     else if(m_Sem1[ClientNo]->isLocked())
     {
@@ -312,8 +438,6 @@ main ( int argc, char *argv[] )
     char* c_LsChar = argv[1];
     Vs.push_back(c_LsChar);
     Vs.push_back(c_LsChar);
-    //Vs.push_back(c_LsChar);
-    //Vs.push_back(c_LsChar);
     vector<char**> Args;
     
     char* CharArgs[2];                          // null terminated array of c strings
@@ -322,9 +446,6 @@ main ( int argc, char *argv[] )
 
     Args.push_back(CharArgs);
     Args.push_back(CharArgs);
-    //Args.push_back(CharArgs);
-    //Args.push_back(CharArgs);
-
     Cts.init(Vs,Args);
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------

@@ -1,14 +1,16 @@
 #include <vector>
 #include <iostream>
+#include <list>
 
 #include <semaphore.h>
 #include <fcntl.h>
 #include "Semaphore.hpp"
 #include "Message.hpp"
 #include "TupleDatabase.hpp"
+#include "ParsedRequest.hpp"
 
 using std::vector;
-using std::string;
+using std::list;
 
 namespace linda {
 
@@ -30,6 +32,8 @@ namespace linda {
         private:
         void handle_input(int ClientNo);
         void handle_output(int ClientNo);
+        void handle_read(int ClientNo);
+        void handle_cancel(int ClientNo);
         bool sendTupleIfStillRequested(int ClientNo, Tuple& t);
 
         vector<int> m_InputPipes;
@@ -38,6 +42,7 @@ namespace linda {
         vector<Semaphore*> m_Sem2;
         Message m_Msg;
         TupleDatabase m_DB;
+        list<ParsedRequest> m_Requests;
 
     };
 }		// -----  end of namespace linda  -----

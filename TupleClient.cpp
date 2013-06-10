@@ -40,18 +40,32 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
         cout <<"ERROR: twój deskryptor jest inwalidą\n";
     }
 
-    unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+    /*unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed1);
-    std::uniform_int_distribution<int> unif(0,5);
+    std::uniform_int_distribution<int> unif(0,5);*/
+
+    if(getpid()%2)
+    {
+        Tuple tuple666;
+        tuple666.push_back(0);
+        readd(string("INT == 1"));
+        output(tuple666);
+    }
+    else
+    {
+        Tuple tuple666;
+        tuple666.push_back(1);
+        output(tuple666);
+        input(string("INT == 0"));
+    }
+    readd(string("YNT == pińcet tysięcy"));
+/*
     //send sth through pipe
     for(int i=0;i<1;++i)
     {
 
         int inputChoice = unif(generator);
-        Tuple tuple666;
-        tuple666.push_back(666);
 
-        output(tuple666);
         switch(inputChoice)
         {
         case 0:
@@ -61,13 +75,16 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
             input(string("INT == * INT == *"));
             break;
         case 2:
-            input(string("INT == 666"));
+            readd(string("INT == 0"));
+            break;
+        case 3:
+            input(string("INT == 0"));
             break;
         default:
             input(string("STR == *"));
             break;
         }
-    }
+    }*/
 }
 
 linda::TupleClient::~TupleClient()
@@ -77,12 +94,22 @@ linda::TupleClient::~TupleClient()
 }
 
 
-Tuple linda::TupleClient::input(std::string pattern)
+Tuple linda::TupleClient::input(string pattern)
+{
+    return readTupleImpl(EMessageType::INPUT,pattern);
+}
+
+Tuple linda::TupleClient::readd(string pattern)
+{
+    return readTupleImpl(EMessageType::READ,pattern);
+}
+
+Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern)
 {
     m_Sem1->lock();
 
     //send message to server
-    m_Msg.id = EMessageType::INPUT;
+    m_Msg.id = type;
     m_Msg.tag = m_Tag++;
     m_Msg.insertString(pattern.c_str());
     write(m_WriteFD,&m_Msg,m_Msg.messageSize());
@@ -110,6 +137,7 @@ Tuple linda::TupleClient::input(std::string pattern)
     }
     else if(rv == 0)
     {
+        cout<<"TIMEOUT"<<endl;
         //timeout. One needs to check whether tuple was send between timeout and sending cancel request
         m_Sem1->unlock();
         m_Sem2->lock();
@@ -137,20 +165,23 @@ Tuple linda::TupleClient::input(std::string pattern)
             {
                //TODO: else if NOT tuple_return, ex.server error..
                 cout<<"server returned error"  <<endl;
+                return Tuple();
             }
-            //TODO: else if NOT tuple_return, ex.server error..
         }
         else{
             //send cancel request
             m_Msg.id = EMessageType::CANCEL_REQUEST;
+            m_Msg.tag = m_Tag;
             m_Msg.length = 0;
             write(m_WriteFD,&m_Msg,m_Msg.messageSize());
         }
         m_Sem2->unlock();
+        return Tuple();
     }
     else
     {
         cout<<"Client select success!\n";
+
         //select returned due to existence of something to read.
         read( m_ReadFD, &m_Msg, sizeof(MessageHeader));
         if(m_Msg.id == EMessageType::TUPLE_RETURN)
@@ -168,7 +199,6 @@ Tuple linda::TupleClient::input(std::string pattern)
         }
         else
         {
-            cout<<"outside"<<endl;
             //TODO: else if NOT tuple_return, ex.server error..
             cout<<"server returned error"  <<endl;
             m_Sem1->unlock();
@@ -184,6 +214,26 @@ bool linda::TupleClient::output(const Tuple& t)
     m_Msg.tag = m_Tag++;
     m_Msg.insertString(t.serialize());
     write(m_WriteFD,&m_Msg,m_Msg.messageSize());
+
+    //read output ack!
+    read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
+    if(m_Msg.id == EMessageType::OUTPUT_ACK)
+    {
+        cout <<"output ok"<<endl;
+        return true;
+    }
+    else if(m_Msg.id == EMessageType::OUTPUT_ERROR)
+    {
+        cout <<"output error"<<endl;
+        return false;
+    }
+    else
+    {
+        cout <<"unexpected output answer"<<endl;
+        return false;
+    }
+   return true;
+
 }
 
     int
@@ -196,9 +246,10 @@ main ( int argc, char *argv[] )
     }
     catch(...)
     {
-        cout<< "! Klient błąąąąąąąąąąąąąąąąąąąąąąąd\n" <<endl;
+        cout<< "Problem z inicjaliacją klienta" <<endl;
         return EXIT_FAILURE;
     }
+    sleep(5);
     cout	<< "! Klient zakończył działanie powodzeniem. (Stwierdzam śmierć bo umar.)" << endl;
 
     return EXIT_SUCCESS;

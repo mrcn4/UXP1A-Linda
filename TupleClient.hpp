@@ -21,9 +21,11 @@ namespace linda {
         TupleClient ();                             // constructor
         ~TupleClient ();
         Tuple input(string inputTuple);
+        Tuple readd(string inputTuple);
         bool output(const Tuple& tuple);
 
     private:
+        Tuple readTupleImpl(EMessageType type, string inputTuple);
         Semaphore* m_Sem1;
         Semaphore* m_Sem2;
         int m_ReadFD;

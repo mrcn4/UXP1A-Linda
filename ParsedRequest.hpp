@@ -10,8 +10,9 @@ namespace linda
 	{
 		char id;
 		short tag;
-		TupleQuery tq;
+        int clientId;
+        TupleQuery tq;
 	};
-	
-	extern ParsedRequest deserializeReq(char *buffer);
+
+    extern ParsedRequest deserializeReq(char *buffer); // is it useful?
 }

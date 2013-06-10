@@ -1,3 +1,6 @@
+#ifndef TUPLEDATABASE_HPP
+#define TUPLEDATABASE_HPP
+
 #include <vector>
 #include <string>
 #include <utility> //pair
@@ -50,3 +53,5 @@ namespace linda {
 	//translation: Tuple::operator==(TupleQuery) -> TupleQuery::operator==(Tuple)
 	bool operator==(const Tuple& t, const TupleQuery& q);
 }
+
+#endif
