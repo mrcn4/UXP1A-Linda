@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "PosixSemaphore.hpp"
 #include "errno.h"
+#include "Globals.hpp"
 
 using std::string;
 using std::cout;
@@ -31,6 +32,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
 
     cout <<"Rlimit is " << RLIMIT_NOFILE << endl;
 
+    Semaphore* CreationSemaphore= new PosixSemaphore("linda_creationSem",O_CREAT,S_IRUSR | S_IWUSR,1);
+
     auto it = ChildrenProcesses.begin();
     auto it2 = ChildrenArgs.begin();
     for(;it != ChildrenProcesses.end(); ++it,++it2)
@@ -39,12 +42,13 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         int PipeDIn[2];
         int ChildPid;
 
-        if(pipe(PipeDIn) < 0) 
+
+        if(pipe(PipeDOut) < 0)
         {
             cout << "failure creating pipe" << endl;
             return;
         }
-        if(pipe(PipeDOut) < 0) 
+        if(pipe(PipeDIn) < 0) 
         {
             cout << "failure creating pipe" << endl;
             return;
@@ -52,12 +56,15 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         m_InputPipes.push_back(PipeDIn[READ]);
         m_OutputPipes.push_back(PipeDOut[WRITE]);
 
+        CreationSemaphore->lock();
         if((ChildPid = fork()) != 0)
         {
             //parent case
+            //close child ends
             close(PipeDIn[WRITE]);
             close(PipeDOut[READ]);
             
+            //create semaphores
             string Sem1Name = getSemName(ChildPid,1);
             string Sem2Name = getSemName(ChildPid,2);
             try
@@ -70,15 +77,23 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
             catch(...)
             {
                 cout << "Error creating semaphore!" << endl;
+                CreationSemaphore->unlock();
                 return;
             }
+            CreationSemaphore->unlock();
         } //end parent case
         else
         {
+            //wait for parent to establish semaphores basing on pid
+            CreationSemaphore->lock();
+            CreationSemaphore->unlock();
             //child case
-            dup2(PipeDIn[WRITE],RLIMIT_NOFILE-1);
+
+            //cout<<"descs1: " <<PipeDIn[WRITE] << Globals::c_MaxFDExclusive-1<<endl;
+
+            dup2(PipeDIn[WRITE],Globals::c_MaxFDExclusive-1);
+            dup2(PipeDOut[READ],Globals::c_MaxFDExclusive-2);
             close(PipeDIn[WRITE]);
-            dup2(PipeDOut[READ],RLIMIT_NOFILE-2);
             close(PipeDOut[READ]);
 
             execvp(it->c_str(),*it2);
@@ -117,8 +132,6 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
     //begin processing events: enter infinite loop
     //
     //
-    
-
     return ;
 }		// -----  end of method linda::CTupleServer::init  -----
 
