@@ -6,9 +6,9 @@ using namespace linda;
 #include <iostream>
 using namespace std;
 
-Tuple linda::TupleDatabase::read(const string& query) const {
-	auto q = TupleQuery(query);
-	auto it = find(db.begin(), db.end(), q);
+Tuple linda::TupleDatabase::read(const TupleQuery &tq) const {
+	//auto q = TupleQuery(query);
+	auto it = find(db.begin(), db.end(), tq);
 
 	if(it == db.end())
 		return Tuple();
@@ -16,8 +16,8 @@ Tuple linda::TupleDatabase::read(const string& query) const {
 	return *it;
 }
 
-Tuple linda::TupleDatabase::input(const string& query) {
-	auto it = find(db.begin(), db.end(), TupleQuery(query));
+Tuple linda::TupleDatabase::input(const TupleQuery &tq) {
+	auto it = find(db.begin(), db.end(), tq);
 
 	if(it == db.end())
 			return Tuple();

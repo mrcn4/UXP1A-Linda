@@ -1,7 +1,9 @@
 #include <iostream>
 
-#include "TupleDatabase.hpp"
+//#include "TupleDatabase.hpp"
+//#include "Message.hpp"
 #include "HelperFunctions.hpp"
+#include "ParsedRequest.hpp"
 
 using namespace std;
 using namespace linda;
@@ -86,16 +88,28 @@ int main(...) {
 	db.output(d);
 	db.output(e);
 
+	Message m_Msg;
+	string pattern = "STR == * STR == * INT == * STR == *";
+	m_Msg.id = EMessageType::READ;
+	m_Msg.tag = 0;
+	m_Msg.length = pattern.length()+1;
+	cout << m_Msg.length << endl;
+	strcpy(m_Msg.data,pattern.c_str());
+	char buffer[1024];
+	memcpy(buffer, &m_Msg, sizeof(MessageHeader) + m_Msg.length);
+	ParsedRequest pr = deserializeReq(buffer);
+	cout << pr.id << endl;
+	cout << pr.tag << endl;
+	Tuple res0 = db.read (pr.tq);
+	//Tuple res0 = db.read (TupleQuery("STR == * STR == * INT == * STR == *"));
 
-	Tuple res0 = db.read ("STR == * STR == * INT == * STR == *");
+	Tuple res1 = db.read(TupleQuery("INT == 5 INT == * INT >= 7 STR == *"));
+	Tuple res2 = db.input(TupleQuery("INT == 5 INT == * INT < 10 STR == *"));
 
-	Tuple res1 = db.read("INT == 5 INT == * INT >= 7 STR == *");
-	Tuple res2 = db.input("INT == 5 INT == * INT < 10 STR == *");
+	Tuple res3 = db.input(TupleQuery("STR == * STR == \"bbb\" INT == 5 STR == *"));
+	Tuple res4 = db.input(TupleQuery("STR == * STR ==   bbb   INT == * STR == *"));
 
-	Tuple res3 = db.input("STR == * STR == \"bbb\" INT == 5 STR == *");
-	Tuple res4 = db.input("STR == * STR ==   bbb   INT == * STR == *");
-
-	Tuple res5 = db.input("STR == * STR == * INT == * STR == *");
+	Tuple res5 = db.input(TupleQuery("STR == * STR == * INT == * STR == *"));
 
 
 	//show tuple names (last field)
@@ -116,6 +130,6 @@ int main(...) {
 	cout << r4 << endl;
 	cout << r5 << endl;
 
-	cout << db.read("STR == * STR == * INT == * STR == *").size() << endl;
-	cout << db.read("STR == alfa").size() << endl;
+	cout << db.read(TupleQuery("STR == * STR == * INT == * STR == *")).size() << endl;
+	cout << db.read(TupleQuery("STR == alfa")).size() << endl;
 }
