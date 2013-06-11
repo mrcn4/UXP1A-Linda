@@ -98,6 +98,9 @@ linda::TupleQuery::TupleQuery(string query) {
 	if(tokens.size() % 3 != 0)
 		throw std::logic_error("Malformed query!");
 
+	if(tokens.size() == 0)
+		throw std::logic_error("Empty query!");
+
 	auto it = tokens.begin();
 	while(it != tokens.end()) {
 
@@ -134,8 +137,16 @@ linda::TupleQuery::TupleQuery(string query) {
 				cond_values.push_back(stof(*it));
 		}
 		else if(*type == "STR") {
+
 			if(*it == "*")
 				condition = ECondition::ONLY_EQUAL_TYPE; //TODO: possible bug, cannot search for "*"
+
+			//handle: search for string with operand "*" -> query should be STR == \*
+			//when operand has \ as first character then all \ must be preceded by extra \ and \* is converted to *
+			if(it->size() > 1 && it->at(0) == '\\') {
+				*it = rewrite_operand(*it);
+			}
+
 			cond_values.push_back(*it);
 		} else
 			throw std::logic_error("Unknown data type in query");
@@ -144,4 +155,34 @@ linda::TupleQuery::TupleQuery(string query) {
 
 		++it;
 	}
+}
+
+//unescape operand
+//all unpaired \ are ignored (STR == \ matches empty string)
+//examples:
+//		\\* 	-> \*
+//		\\\*	-> \*
+//		\* 		-> *
+//		\\\\* 	-> \\*
+static string TupleQuery::rewrite_operand(const string& operand)  {
+
+	string result;
+	if(operand.size()==0) return result;
+
+	for(size_t i=0;i < operand.size()-1;++i) {
+		if(operand[i] != '\\')
+			result += operand[i];
+		else {
+			if(operand[i+1] == '\\') {
+				++i;
+				result += '\\';
+			}
+			else if(operand[i+1] == '*') {
+				++i;
+				result += '*';
+			}
+		}
+	}
+
+	return result;
 }

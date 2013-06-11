@@ -17,6 +17,15 @@ namespace linda {
 	 * \biref parsed query representation
 	 * query  format: (TYPE OPERATOR VALUE)+
 	 * example query: INT > 5 STR == "alfa beta" STR == gamma FLOAT <= 5.2
+	 *
+	 * special case: \ as first character of STR operation operand
+	 * ex. STR = \\alfa\\
+	 * ALL \\ are changed to \
+	 * ALL unpaired \ are igonred
+	 * ALL \* are changed to *
+	 * use cases:
+	 * A) search for empty string: STR == \
+	 * B) search for string containing only *: STR == \*
 	 */
 	class TupleQuery {
 	public:
@@ -32,11 +41,13 @@ namespace linda {
 
 		vector<ECondition> conditions; //due to pair<enum, something> is invalid
 		Tuple cond_values;
+
+		static string rewrite_operand(const string& operand);
 	};
 
 	/*
 	 * \biref database representation, allows to read, input (read with delete), output
-	 * TODO: synchronization
+	 * operations are not synchronized!
 	 */
 	class TupleDatabase {
 	public:
