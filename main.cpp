@@ -97,7 +97,7 @@ int main(...) {
 	strcpy(m_Msg.data,pattern.c_str());
 	char buffer[1024];
 	memcpy(buffer, &m_Msg, sizeof(MessageHeader) + m_Msg.length);
-	ParsedRequest pr = deserializeReq(buffer);
+	ParsedClientRequest pr = deserializeClientRequest(buffer);
 	cout << pr.id << endl;
 	cout << pr.tag << endl;
 	Tuple res0 = db.read (pr.tq);
