@@ -130,6 +130,6 @@ int main(...) {
 	cout << r4 << endl;
 	cout << r5 << endl;
 
-	cout << db.read(TupleQuery("STR == * STR == * INT == * STR == *")).size() << endl;
+	cout << db.read(TupleQuery("STR == * STR == * INT == * STR == *")).size() << std::endl;
 	cout << db.read(TupleQuery("STR == alfa")).size() << endl;
 }
