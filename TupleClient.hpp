@@ -50,7 +50,8 @@ namespace linda {
         int m_WriteFD;
         int m_Tag;
         Message m_Msg;
-        
+
+
     }; // -----  end of class CTupleClient  -----
 }		// -----  end of namespace linda  -----
 

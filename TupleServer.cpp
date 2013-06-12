@@ -433,11 +433,12 @@ main ( int argc, char *argv[] )
         cout	<< "You should provide name of program to launch (for example absolute 'client' path from make)" << endl;
     }
 
+    //TODO: doprowadzic do mozliwosci dowolnej ilosci children
     linda::TupleServer Cts;
     vector<string> Vs;
     char* c_LsChar = argv[1];
     Vs.push_back(c_LsChar);
-    Vs.push_back(c_LsChar);
+   // Vs.push_back(c_LsChar);
     vector<char**> Args;
     
     char* CharArgs[2];                          // null terminated array of c strings
@@ -445,7 +446,7 @@ main ( int argc, char *argv[] )
     CharArgs[1] = 0;
 
     Args.push_back(CharArgs);
-    Args.push_back(CharArgs);
+    //Args.push_back(CharArgs);
     Cts.init(Vs,Args);
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------

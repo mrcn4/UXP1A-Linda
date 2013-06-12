@@ -27,6 +27,7 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
     //przeniesiono do SampleClient.cpp
 }
 
+
 linda::TupleClient::~TupleClient()
 {
     delete m_Sem1;
