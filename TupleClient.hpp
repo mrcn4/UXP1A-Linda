@@ -38,12 +38,12 @@ namespace linda {
         // ====================  LIFECYCLE     =======================================
         TupleClient ();                             // constructor
         ~TupleClient ();
-        Tuple input(string inputTuple);
-        Tuple readd(string inputTuple);
+        Tuple input(string inputTuple, timeval* timeout);
+        Tuple readd(string inputTuple, timeval* timeout);
         bool output(const Tuple& tuple);
 
     private:
-        Tuple readTupleImpl(EMessageType type, string inputTuple);
+        Tuple readTupleImpl(EMessageType type, string inputTuple, timeval* timeout);
         Semaphore* m_Sem1;
         Semaphore* m_Sem2;
         int m_ReadFD;
