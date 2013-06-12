@@ -1,21 +1,4 @@
-#include "HelperFunctions.hpp"
 #include "TupleClient.hpp"
-#include <string>
-#include <stdexcept>
-#include <unistd.h>
-#include <iostream>
-#include <sys/resource.h>
-#include "PosixSemaphore.hpp"
-#include "Message.hpp"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/select.h>
-#include <cstring>
-#include "errno.h"
-#include "Globals.hpp"
-#include <random>
-#include <chrono>
 
 using std::cout;
 using std::endl;
@@ -236,8 +219,11 @@ bool linda::TupleClient::output(const Tuple& t)
 
 }
 
-    int
-main ( int argc, char *argv[] )
+
+/*
+//moved to SampleClient.cpp
+
+int main ( int argc, char *argv[] )
 {   
     linda::TupleClient* Ctc;
     try
@@ -254,3 +240,4 @@ main ( int argc, char *argv[] )
 
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------
+*/

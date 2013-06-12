@@ -1,12 +1,30 @@
 #ifndef TUPLECLIENT_HPP
 #define TUPLECLIENT_HPP
 
-#include "semaphore.h"
-#include "fcntl.h"
-#include "Semaphore.hpp"
+
 #include "Message.hpp"
 #include "Tuple.hpp"
+#include "PosixSemaphore.hpp"
+#include "Globals.hpp"
+#include "HelperFunctions.hpp"
+
+
+#include <fcntl.h>
+#include <errno.h>
+#include <semaphore.h>
 #include <string>
+#include <stdexcept>
+#include <unistd.h>
+#include <iostream>
+#include <sys/resource.h>
+#include <random>
+#include <chrono>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/select.h>
+#include <cstring>
+
 
 using std::string;
 

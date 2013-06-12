@@ -4,6 +4,7 @@
 #include	<string>
 #include	<vector>
 #include 	<stdexcept>
+#include 	<fcntl.h>
 
 namespace linda {
 
