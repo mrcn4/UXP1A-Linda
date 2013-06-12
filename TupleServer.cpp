@@ -178,7 +178,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }
     }
     return ;
-    }
+}
 
 void linda::TupleServer::handle_input(int ClientNo)
 {
@@ -214,12 +214,12 @@ void linda::TupleServer::handle_input(int ClientNo)
             else
             {
                 cout<<"can't be sat now\n";
-                ParsedRequest pr;
+                ParsedClientRequest pr;
                 pr.clientId = ClientNo;
                 pr.id=m_Msg.id;
                 pr.tag=m_Msg.tag;
                 pr.tq = tq;
-                m_Requests.push_back(pr);
+                m_WaitingRequests.push_back(pr);
             }
         }
     }
@@ -269,12 +269,12 @@ void linda::TupleServer::handle_read(int ClientNo)
             {
                 cout<<"can't be sat now\n";
 
-                ParsedRequest pr;
+                ParsedClientRequest pr;
                 pr.clientId = ClientNo;
                 pr.id=m_Msg.id;
                 pr.tag=m_Msg.tag;
                 pr.tq = tq;
-                m_Requests.push_back(pr);
+                m_WaitingRequests.push_back(pr);
             }
         }
     }
@@ -286,11 +286,11 @@ void linda::TupleServer::handle_cancel(int ClientNo)
     cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
     cout << "    m_Msg.length: " << m_Msg.length <<endl;
 
-    auto i = std::begin(m_Requests);
-    while (i != std::end(m_Requests)) {
+    auto i = std::begin(m_WaitingRequests);
+    while (i != std::end(m_WaitingRequests)) {
         if(i->clientId == ClientNo)
         {
-            m_Requests.erase(i);
+        	m_WaitingRequests.erase(i);
             break;
         }
     }
@@ -336,8 +336,8 @@ void linda::TupleServer::handle_output(int ClientNo)
             write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
 
             //redo all queries (TODO: should be before output and only new typle with requests)
-            auto i = std::begin(m_Requests);
-            while (i != std::end(m_Requests)) {
+            auto i = std::begin(m_WaitingRequests);
+            while (i != std::end(m_WaitingRequests)) {
                 if(i->id == EMessageType::INPUT)
                 {
                     Tuple t = m_DB.input(i->tq);
@@ -349,7 +349,7 @@ void linda::TupleServer::handle_output(int ClientNo)
                         {
                             m_DB.output(t);
                         }
-                        i = m_Requests.erase(i);
+                        i = m_WaitingRequests.erase(i);
                         continue;
                     }
                 }
@@ -359,7 +359,7 @@ void linda::TupleServer::handle_output(int ClientNo)
                     if(t.size()>0)
                     {
                         sendTupleIfStillRequested(i->clientId,t);
-                        i = m_Requests.erase(i);
+                        i = m_WaitingRequests.erase(i);
                         continue;
                     }
                 }

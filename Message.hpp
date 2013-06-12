@@ -29,25 +29,21 @@ namespace linda
 
         char data[PIPE_BUF-sizeof(MessageHeader)];
 
-        bool insertString(string);
-        int messageSize();
+        bool insertString(string InsString) {
+			if(InsString.length()+1 < PIPE_BUF-sizeof(MessageHeader))
+			{
+				strcpy(data,InsString.c_str());
+				length = InsString.length()+1; // end char \0 => +1
+				return true;
+			}
+			return false;
+		}
+		
+		
+        int messageSize() {
+			 return sizeof(MessageHeader) + length;
+		}
     };
-
-    bool Message::insertString(string InsString)
-    {
-        if(InsString.length()+1 < PIPE_BUF-sizeof(MessageHeader))
-        {
-            strcpy(data,InsString.c_str());
-            length = InsString.length()+1; // end char \0 => +1
-            return true;
-        }
-        return false;
-    }
-
-    int Message::messageSize()
-    {
-        return sizeof(MessageHeader) + length;
-    }
 
 }
 #endif // MESSAGE_HPP

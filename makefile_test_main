@@ -1,0 +1,9 @@
+all: clean test
+
+test:
+	g++ -std=c++11 HelperFunctions.cpp PosixSemaphore.cpp Tuple.cpp TupleDatabase.cpp TupleQuery.cpp main.cpp -o test -lpthread -lrt
+
+
+clean:
+	rm -f server client test *.o
+

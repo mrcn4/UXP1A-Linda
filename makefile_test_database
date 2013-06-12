@@ -1,9 +1,0 @@
-all: clean test
-
-test:
-	g++-4.8 -std=c++11 TupleDatabase.cpp HelperFunctions.cpp main.cpp -o test -lpthread -lrt
-
-
-clean:
-	rm -f test *.o
-

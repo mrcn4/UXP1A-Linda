@@ -4,6 +4,7 @@
 #include	<string>
 #include	<vector>
 #include 	<stdexcept>
+#include 	<fcntl.h>
 
 namespace linda {
 
@@ -11,8 +12,15 @@ namespace linda {
 	using std::vector;
 
     string getSemName(int Pid,int SemNo);
-    void Tokenize(const string& str, std::vector<string>& tokens);
     int is_valid_fd(int fd);
-}		// -----  end of namespace linda  -----
+
+
+    void Tokenize(const string& str, std::vector<string>& tokens);
+    void remove_quotations(string& str);
+    //Tokenize helper:
+    string unescaped_string(const string& str);
+
+
+}	// -----  end of namespace linda  -----
 
 #endif

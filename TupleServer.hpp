@@ -7,7 +7,6 @@
 #include "Semaphore.hpp"
 #include "Message.hpp"
 #include "TupleDatabase.hpp"
-#include "ParsedRequest.hpp"
 
 using std::vector;
 using std::list;
@@ -42,7 +41,7 @@ namespace linda {
         vector<Semaphore*> m_Sem2;
         Message m_Msg;
         TupleDatabase m_DB;
-        list<ParsedRequest> m_Requests;
+        list<ParsedClientRequest> m_WaitingRequests;
 
     };
 }		// -----  end of namespace linda  -----

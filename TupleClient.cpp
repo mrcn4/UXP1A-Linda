@@ -1,21 +1,4 @@
-#include "HelperFunctions.hpp"
 #include "TupleClient.hpp"
-#include <string>
-#include <stdexcept>
-#include <unistd.h>
-#include <iostream>
-#include <sys/resource.h>
-#include "PosixSemaphore.hpp"
-#include "Message.hpp"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/select.h>
-#include <cstring>
-#include "errno.h"
-#include "Globals.hpp"
-#include <random>
-#include <chrono>
 
 using std::cout;
 using std::endl;
@@ -40,51 +23,8 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
         cout <<"ERROR: twój deskryptor jest inwalidą\n";
     }
 
-    /*unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed1);
-    std::uniform_int_distribution<int> unif(0,5);*/
-
-    if(getpid()%2)
-    {
-        Tuple tuple666;
-        tuple666.push_back(0);
-        readd(string("INT == 1"));
-        output(tuple666);
-    }
-    else
-    {
-        Tuple tuple666;
-        tuple666.push_back(1);
-        output(tuple666);
-        input(string("INT == 0"));
-    }
-    readd(string("YNT == pińcet tysięcy"));
-/*
-    //send sth through pipe
-    for(int i=0;i<1;++i)
-    {
-
-        int inputChoice = unif(generator);
-
-        switch(inputChoice)
-        {
-        case 0:
-            input(string("INT == * INT == * INT == *"));
-            break;
-        case 1:
-            input(string("INT == * INT == *"));
-            break;
-        case 2:
-            readd(string("INT == 0"));
-            break;
-        case 3:
-            input(string("INT == 0"));
-            break;
-        default:
-            input(string("STR == *"));
-            break;
-        }
-    }*/
+    //mam nadzieje ze nie usunalem nic waznego z konstruktora
+    //przeniesiono do SampleClient.cpp
 }
 
 linda::TupleClient::~TupleClient()
@@ -94,17 +34,17 @@ linda::TupleClient::~TupleClient()
 }
 
 
-Tuple linda::TupleClient::input(string pattern)
+Tuple linda::TupleClient::input(string pattern, timeval* timeout)
 {
-    return readTupleImpl(EMessageType::INPUT,pattern);
+    return readTupleImpl(EMessageType::INPUT,pattern, timeout);
 }
 
-Tuple linda::TupleClient::readd(string pattern)
+Tuple linda::TupleClient::readd(string pattern, timeval* timeout)
 {
-    return readTupleImpl(EMessageType::READ,pattern);
+    return readTupleImpl(EMessageType::READ,pattern, timeout);
 }
 
-Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern)
+Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timeval* timeout)
 {
     m_Sem1->lock();
 
@@ -116,18 +56,19 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern)
 
     //wait with semaphore up with timeout
     fd_set set;
-    struct timeval timeout;
+
     int rv; //select return value
 
     FD_ZERO(&set); // clear the set
     FD_SET(m_ReadFD, &set); // add our file descriptor to the set
 
     //set timeout to <globals.hpp> seconds
-    timeout.tv_sec = Globals::c_ClientTimeoutSeconds;
-    timeout.tv_usec = 0;
+    //changed -> closer to blinowski style
+   // timeout.tv_sec = Globals::c_ClientTimeoutSeconds;
+    //timeout.tv_usec = 0;
 
     //1st arg of select is "the highest-numbered file descriptor in any of the three sets, plus 1."
-    rv = select(m_ReadFD + 1, &set, NULL, NULL, &timeout);
+    rv = select(m_ReadFD + 1, &set, NULL, NULL, timeout);
     if(rv == -1)
     {
         //select error
@@ -236,8 +177,11 @@ bool linda::TupleClient::output(const Tuple& t)
 
 }
 
-    int
-main ( int argc, char *argv[] )
+
+/*
+//moved to SampleClient.cpp
+
+int main ( int argc, char *argv[] )
 {   
     linda::TupleClient* Ctc;
     try
@@ -253,3 +197,4 @@ main ( int argc, char *argv[] )
     sleep(5);
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------
+*/
