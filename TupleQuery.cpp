@@ -81,8 +81,8 @@ linda::TupleQuery::TupleQuery(string query) {
 
 		//condition type
 		++it;
-		if(*it == "<") 		 condition = ECondition::LESS;
-		else if(*it == ">")  condition = ECondition::GREATER;
+		if	   (*it == "<" ) condition = ECondition::LESS;
+		else if(*it == ">" ) condition = ECondition::GREATER;
 		else if(*it == "==") condition = ECondition::EQUAL;
 		else if(*it == "<=") condition = ECondition::LESS_EQUAL;
 		else if(*it == ">=") condition = ECondition::GREATER_EQUAL;
@@ -101,6 +101,10 @@ linda::TupleQuery::TupleQuery(string query) {
 				cond_values.push_back(stoi(*it));
 		}
 		else if(*type == "FLOAT") {
+
+			if(condition == ECondition::EQUAL)
+				throw logic_error("== with FLOAT not allowed!"); //documentation requirement
+
 			if(*it == "*") {
 				cond_values.push_back(0.0F);
 				condition = ECondition::ONLY_EQUAL_TYPE;
@@ -115,13 +119,13 @@ linda::TupleQuery::TupleQuery(string query) {
 
 			//handle: search for string with operand "*" -> query should be STR == \*
 			//when operand has \ as first character then all \ must be preceded by extra \ and \* is converted to *
-			if(it->size() > 1 && it->at(0) == '\\') {
-				*it = rewrite_operand(*it);
-			}
+//			if(it->size() > 1 && it->at(0) == '\\') {
+//				*it = rewrite_operand(*it);
+//			}
 
 			cond_values.push_back(*it);
 		} else
-			throw std::logic_error("Unknown data type in query");
+			throw logic_error("Unknown data type in query");
 
 		conditions.push_back(condition);
 
@@ -129,34 +133,6 @@ linda::TupleQuery::TupleQuery(string query) {
 	}
 }
 
-//unescape operand
-//all unpaired \ are ignored (STR == \ matches empty string)
-//examples:
-//		\\* 	-> \*
-//		\\\*	-> \*
-//		\* 		-> *
-//		\\\\* 	-> \\*
-string TupleQuery::rewrite_operand(const string& operand)  {
 
-	string result;
-	if(operand.size()==0) return result;
-
-	for(size_t i=0;i < operand.size()-1;++i) {
-		if(operand[i] != '\\')
-			result += operand[i];
-		else {
-			if(operand[i+1] == '\\') {
-				++i;
-				result += '\\';
-			}
-			else if(operand[i+1] == '*') {
-				++i;
-				result += '*';
-			}
-		}
-	}
-
-	return result;
-}
 
 

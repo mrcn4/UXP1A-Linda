@@ -177,7 +177,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }
     }
     return ;
-    }
+}
 
 void linda::TupleServer::handle_input(int ClientNo)
 {
