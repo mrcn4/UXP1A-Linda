@@ -249,8 +249,7 @@ main ( int argc, char *argv[] )
         cout<< "Problem z inicjaliacją klienta" <<endl;
         return EXIT_FAILURE;
     }
+    cout	<< "! Klient zakończył działanie powodzeniem. (Stwierdzam śmierć za 5s bo umar.)" << endl;
     sleep(5);
-    cout	<< "! Klient zakończył działanie powodzeniem. (Stwierdzam śmierć bo umar.)" << endl;
-
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------

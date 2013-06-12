@@ -100,6 +100,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }//end child case
 
     }
+    delete CreationSemaphore;
 
     //begin processing events: enter infinite loop
     bool LongLiveTheServer = true;
@@ -155,7 +156,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                             handle_read(clientCount);
                         break;
                         default:
-                            cout<<"Sever error: undefined message type";
+                            cout<<"Server error: undefined message type";
                             return;
                     }
                 }
