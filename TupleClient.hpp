@@ -39,7 +39,7 @@ namespace linda {
         TupleClient ();                             // constructor
         ~TupleClient ();
         Tuple input(string inputTuple, timeval* timeout);
-        Tuple readd(string inputTuple, timeval* timeout);
+        Tuple read(string inputTuple, timeval* timeout);
         bool output(const Tuple& tuple);
 
     private:

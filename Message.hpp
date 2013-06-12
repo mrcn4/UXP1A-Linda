@@ -18,6 +18,9 @@ namespace linda
         short length;
     };
 
+    /**
+     * \brief Simple structure used to pass messages through unix pipes
+     */
     struct Message
     {
         // BEGIN OF INSERTED MessageHeader (X11 Style)
@@ -29,6 +32,22 @@ namespace linda
 
         char data[PIPE_BUF-sizeof(MessageHeader)];
 
+        /**
+         * \brief Used for pipe write calls.
+         *
+         * \returns Whole message size
+         */
+        int messageSize() {
+             return sizeof(MessageHeader) + length;
+        }
+
+        /**
+         * \brief Inserts string to data buffer. 
+         *
+         * \param InsString string to insert
+         *
+         * \returns whether it succeeded
+         */
         bool insertString(string InsString) {
 			if(InsString.length()+1 < PIPE_BUF-sizeof(MessageHeader))
 			{
@@ -38,11 +57,7 @@ namespace linda
 			}
 			return false;
 		}
-		
-		
-        int messageSize() {
-			 return sizeof(MessageHeader) + length;
-		}
+
     };
 
 }

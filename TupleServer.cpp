@@ -20,14 +20,19 @@ using linda::Tuple;
     void
 linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> ChildrenArgs )
 {
-    cout<<"List of procs to run:\n";
-    for(auto it = ChildrenProcesses.begin(); it != ChildrenProcesses.end(); ++it)
+    if(Globals::c_Debug)
     {
-        cout << *it << endl;
+        cout<<"List of procs to run:\n";
+        for(auto it = ChildrenProcesses.begin(); it != ChildrenProcesses.end(); ++it)
+        {
+            cout << *it << endl;
+        }
     }
+
 
     if(ChildrenProcesses.size() != ChildrenArgs.size())
     {
+
         cout << "not matching processnames/args vector sizes" << endl;
         return;
     }
@@ -44,12 +49,14 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
 
         if(pipe(PipeDOut) < 0)
         {
-            cout << "failure creating pipe" << endl;
+            if(Globals::c_Debug)
+                cout << "failure creating pipe" << endl;
             return;
         }
         if(pipe(PipeDIn) < 0) 
         {
-            cout << "failure creating pipe" << endl;
+            if(Globals::c_Debug)
+                cout << "failure creating pipe" << endl;
             return;
         }
         m_InputPipes.push_back(PipeDIn[READPIPE]);
@@ -75,7 +82,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
             }
             catch(...)
             {
-                cout << "Error creating semaphore!" << endl;
+                if(Globals::c_Debug)
+                    cout << "Error creating semaphore!" << endl;
                 CreationSemaphore->unlock();
                 return;
             }
@@ -94,8 +102,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
             close(PipeDOut[READPIPE]);
 
             execvp(it->c_str(),*it2); //should never return
-
-            cout << "Error: unknown command or wrong arguments!" << endl;
+            if(Globals::c_Debug)
+                cout << "Error: unknown command or wrong arguments!" << endl;
             return;
         }//end child case
 
@@ -118,7 +126,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }
         if(max_fd == -1)
         {
-            cout<<"All clients disconnected"<<endl;
+            if(Globals::c_Debug)
+                cout<<"All clients disconnected"<<endl;
             return;
         }
         //endof select preparation
@@ -127,7 +136,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         //2nd arg: read set; 3rd arg: write set (0 FD); 4th arg: alarm set (0 FD)
         //5th arg: timeout (no timeout - till infinity)
         rv = select(max_fd + 1, &set, NULL, NULL, NULL);
-        cout<<"Server select finish\n";
+        if(Globals::c_Debug)
+            cout<<"Server select finish\n";
         if (rv <= 0)
         {
             cout<<"Server select unexpected error\n";
@@ -144,7 +154,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                     switch(m_Msg.id)
                     {
                         case EMessageType::INPUT:
-                            handle_input(clientCount);
+                            handle_read(clientCount,true);
                         break;
                         case EMessageType::OUTPUT:
                             handle_output(clientCount);
@@ -153,10 +163,11 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                             handle_cancel(clientCount);
                         break;
                         case EMessageType::READ:
-                            handle_read(clientCount);
+                            handle_read(clientCount,false);
                         break;
                         default:
-                            cout<<"Server error: undefined message type";
+                            if(Globals::c_Debug)
+                                cout<<"Server error: undefined message type";
                             return;
                     }
                 }
@@ -164,6 +175,12 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                 {
                     close(m_InputPipes[clientCount]);
                     close(m_OutputPipes[clientCount]);
+
+                    if(m_Sem1[clientCount]->isLocked())
+                        m_Sem1[clientCount]->unlock();
+                    if(m_Sem2[clientCount]->isLocked())
+                        m_Sem2[clientCount]->unlock();
+
                     delete(m_Sem1[clientCount]);
                     delete(m_Sem2[clientCount]);
 
@@ -180,67 +197,62 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
     return ;
 }
 
-void linda::TupleServer::handle_input(int ClientNo)
+bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery TQ)
 {
-    cout << "\n  Server: received input message"<<endl;
-    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
-    cout << "    m_Msg.length: " << m_Msg.length <<endl;
-
-    int rv = read(m_InputPipes[ClientNo],&m_Msg.data,m_Msg.length);
-    if(rv == -1)
+    if(InputReqest)
     {
-        cout << "Read test data failed. Errno is: " << errno ;
-    }
-    else if (rv == m_Msg.length)
-    {
-        //valid input request.
-        cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
-
-        //if can be satisied now, do it now (unsynchonized on DB level)
+        Tuple t = m_DB.input(TQ);
+        if(t.size()>0)
         {
-            //mutex needed if mt-server
-            string query = string(m_Msg.data);
-            TupleQuery tq(query);
-            Tuple t = m_DB.input(tq);
-            if(t.size()>0)
+            bool Result = sendTupleIfStillRequested(ClientNo,t);
+            if(false == Result)
             {
-                bool Result = sendTupleIfStillRequested(ClientNo,t);
-                if(false == Result)
-                {
+                if(Globals::c_Debug)
                     cout<<"send failed, return tuple";
-                    m_DB.output(t);
-                }
+                m_DB.output(t);
             }
-            else
-            {
-                cout<<"can't be sat now\n";
-                ParsedClientRequest pr;
-                pr.clientId = ClientNo;
-                pr.id=m_Msg.id;
-                pr.tag=m_Msg.tag;
-                pr.tq = tq;
-                m_WaitingRequests.push_back(pr);
-            }
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
-
+    else
+    {
+        Tuple t = m_DB.read(TQ);
+        if(t.size()>0)
+        {
+            sendTupleIfStillRequested(ClientNo,t);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
 
-void linda::TupleServer::handle_read(int ClientNo)
+void linda::TupleServer::handle_read(int ClientNo, bool InputReqest)
 {
-    cout << "\n  Server: received read message"<<endl;
-    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
-    cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    if(Globals::c_Debug)
+    {
+        cout << "\n  Server: received data access message"<<endl;
+        cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+        cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    }
 
     int rv = read(m_InputPipes[ClientNo],&m_Msg.data,m_Msg.length);
     if(rv == -1)
     {
-        cout << "Read test data failed. Errno is: " << errno ;
+        if(Globals::c_Debug)
+            cout << "Read test data failed. Errno is: " << errno ;
     }
     else if (rv == m_Msg.length)
     {
         //valid input request.
-        cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
+        if(Globals::c_Debug)
+            cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
 
         //if can be satisied now, do it now (unsynchonized on DB level)
         {
@@ -260,14 +272,10 @@ void linda::TupleServer::handle_read(int ClientNo)
                 return;
             }
 
-            Tuple t = m_DB.read(tq);
-            if(t.size()>0)
+            if(!doInputRead(ClientNo,InputReqest,tq))
             {
-                bool Result = sendTupleIfStillRequested(ClientNo,t);
-            }
-            else
-            {
-                cout<<"can't be sat now\n";
+                if(Globals::c_Debug)
+                    cout<<"can't be sat now\n";
 
                 ParsedClientRequest pr;
                 pr.clientId = ClientNo;
@@ -282,9 +290,12 @@ void linda::TupleServer::handle_read(int ClientNo)
 
 void linda::TupleServer::handle_cancel(int ClientNo)
 {
-    cout << "\n  Server: received cancel message"<<endl;
-    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
-    cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    if(Globals::c_Debug)
+    {
+        cout << "\n  Server: received cancel message"<<endl;
+        cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+        cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    }
 
     auto i = std::begin(m_WaitingRequests);
     while (i != std::end(m_WaitingRequests)) {
@@ -299,78 +310,83 @@ void linda::TupleServer::handle_cancel(int ClientNo)
 
 void linda::TupleServer::handle_output(int ClientNo)
 {
-    cout << "\n  Server: received output message"<<endl;
-    cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
-    cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    if(Globals::c_Debug)
+    {
+        cout << "\n  Server: received output message"<<endl;
+        cout << "    m_Msg.tag: " << m_Msg.tag <<endl;
+        cout << "    m_Msg.length: " << m_Msg.length <<endl;
+    }
 
     int rv = read(m_InputPipes[ClientNo],&m_Msg.data,m_Msg.length);
     if(rv == -1)
     {
-        cout << "Read test data failed. Errno is: " << errno ;
+        if(Globals::c_Debug)
+            cout << "Read test data failed. Errno is: " << errno ;
     }
     else if (rv == m_Msg.length)
     {
         //valid input request.
-        cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
+        if(Globals::c_Debug)
+            cout <<"    Read returned: " << rv << " bytes. Data is: " << string(m_Msg.data) << endl;
 
+        Tuple t;
+        try{
+            t.deserialize(string(m_Msg.data));
+        }
+        catch(std::invalid_argument)
         {
-            Tuple t;
-            try{
-                t.deserialize(string(m_Msg.data));
-            }
-            catch(std::invalid_argument)
-            {
-                //ack output
-                m_Msg.id = EMessageType::OUTPUT_ERROR;
-                m_Msg.length = 0;
-                //tag is the same
-                write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
-            }
-
-            m_DB.output(t);
-
             //ack output
-            m_Msg.id = EMessageType::OUTPUT_ACK;
+            m_Msg.id = EMessageType::OUTPUT_ERROR;
             m_Msg.length = 0;
             //tag is the same
             write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
-
-            //redo all queries (TODO: should be before output and only new typle with requests)
-            auto i = std::begin(m_WaitingRequests);
-            while (i != std::end(m_WaitingRequests)) {
-                if(i->id == EMessageType::INPUT)
-                {
-                    Tuple t = m_DB.input(i->tq);
-                    if(t.size()>0)
-                    {
-                        //tuple found
-                        bool Result = sendTupleIfStillRequested(i->clientId,t);
-                        if(false == Result)
-                        {
-                            m_DB.output(t);
-                        }
-                        i = m_WaitingRequests.erase(i);
-                        continue;
-                    }
-                }
-                else if(i->id == EMessageType::READ)
-                {
-                    Tuple t = m_DB.read(i->tq);
-                    if(t.size()>0)
-                    {
-                        sendTupleIfStillRequested(i->clientId,t);
-                        i = m_WaitingRequests.erase(i);
-                        continue;
-                    }
-                }
-                else
-                {
-                    cout<<"Wrong message type in requests." << endl;
-                }
-
-                ++i;
-            }
         }
+
+        m_DB.output(t);
+
+        //ack output
+        m_Msg.id = EMessageType::OUTPUT_ACK;
+        m_Msg.length = 0;
+        //tag is the same
+        write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
+
+        //redo all queries (TODO: should be before output and only new typle with requests)
+        auto i = std::begin(m_WaitingRequests);
+        while (i != std::end(m_WaitingRequests)) {
+            if(i->id == EMessageType::INPUT)
+            {
+                Tuple t = m_DB.input(i->tq);
+                if(t.size()>0)
+                {
+                    //tuple found
+                    bool Result = sendTupleIfStillRequested(i->clientId,t);
+                    if(false == Result)
+                    {
+                        m_DB.output(t);
+                    }
+                    i = m_WaitingRequests.erase(i);
+                    continue;
+                }
+            }
+            else if(i->id == EMessageType::READ)
+            {
+                Tuple t = m_DB.read(i->tq);
+                if(t.size()>0)
+                {
+                    sendTupleIfStillRequested(i->clientId,t);
+                    i = m_WaitingRequests.erase(i);
+                    continue;
+                }
+            }
+            else
+            {
+                if(Globals::c_Debug)
+                    cout<<"Wrong message type in requests." << endl;
+            }
+
+            ++i;
+        }
+
     }
 }
 
@@ -394,11 +410,13 @@ bool linda::TupleServer::sendTupleIfStillRequested(int ClientNo, linda::Tuple &t
         if(m_Msg.id == EMessageType::CANCEL_REQUEST)
         {
             //ewidentnie cancel.
-            cout<<"Cancelled;"<<endl;
+            if(Globals::c_Debug)
+                cout<<"Cancelled;"<<endl;
         }
         else
         {
-            cout<<"sth different"<<endl;
+            if(Globals::c_Debug)
+                cout<<"sth different"<<endl;
         }
         returnValue = false;
     }

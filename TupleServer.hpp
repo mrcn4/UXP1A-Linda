@@ -1,3 +1,6 @@
+#ifndef TUPLESERVER_HPP
+#define TUPLESERVER_HPP
+
 #include <vector>
 #include <iostream>
 #include <list>
@@ -29,11 +32,11 @@ namespace linda {
         void init(vector<string> ChildrenProcesses, vector<char**> ChildrenArgs );
         
         private:
-        void handle_input(int ClientNo);
         void handle_output(int ClientNo);
-        void handle_read(int ClientNo);
+        void handle_read(int ClientNo, bool IsInputRequest);
         void handle_cancel(int ClientNo);
         bool sendTupleIfStillRequested(int ClientNo, Tuple& t);
+        bool doInputRead(int ClientNo, bool InputReqest,TupleQuery t);
 
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;
@@ -45,3 +48,5 @@ namespace linda {
 
     };
 }		// -----  end of namespace linda  -----
+
+#endif //TUPLESERVER_HPP

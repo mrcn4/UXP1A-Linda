@@ -20,7 +20,9 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
     }
     else
     {
-        cout <<"ERROR: twój deskryptor jest inwalidą\n";
+        if(Globals::c_Debug)
+             cout <<"ERROR: Invalid descriptor when initialising client\n";
+        throw std::logic_error("Descriptors problem, probably client was not run by server");
     }
 
     //mam nadzieje ze nie usunalem nic waznego z konstruktora
@@ -39,7 +41,7 @@ Tuple linda::TupleClient::input(string pattern, timeval* timeout)
     return readTupleImpl(EMessageType::INPUT,pattern, timeout);
 }
 
-Tuple linda::TupleClient::readd(string pattern, timeval* timeout)
+Tuple linda::TupleClient::read(string pattern, timeval* timeout)
 {
     return readTupleImpl(EMessageType::READ,pattern, timeout);
 }
@@ -62,11 +64,6 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
     FD_ZERO(&set); // clear the set
     FD_SET(m_ReadFD, &set); // add our file descriptor to the set
 
-    //set timeout to <globals.hpp> seconds
-    //changed -> closer to blinowski style
-   // timeout.tv_sec = Globals::c_ClientTimeoutSeconds;
-    //timeout.tv_usec = 0;
-
     //1st arg of select is "the highest-numbered file descriptor in any of the three sets, plus 1."
     rv = select(m_ReadFD + 1, &set, NULL, NULL, timeout);
     if(rv == -1)
@@ -86,14 +83,14 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
         //async read
         int flags = fcntl(m_ReadFD, F_GETFL, 0);
         fcntl(m_ReadFD, F_SETFL, flags | O_NONBLOCK);
-        int readRV = read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
+        int readRV = ::read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
         fcntl(m_ReadFD, F_SETFL, flags);
 
         if(readRV == sizeof(MessageHeader)) //wiadomość wysłana wyslana po select przed s1.unlock
         {
             if(m_Msg.id == EMessageType::TUPLE_RETURN)
             {
-                 bool ReadSuccess = (read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
+                 bool ReadSuccess = (::read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
                  Tuple t;
                  if(ReadSuccess)
                  {
@@ -104,8 +101,9 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
             }
             else
             {
-               //TODO: else if NOT tuple_return, ex.server error..
-                cout<<"server returned error"  <<endl;
+               //else if NOT tuple_return, ex.server error..
+                if(Globals::c_Debug)
+                    cout<<"server returned error"  <<endl;
                 return Tuple();
             }
         }
@@ -121,19 +119,21 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
     }
     else
     {
-        cout<<"Client select success!\n";
+        if(Globals::c_Debug)
+            cout<<"Client select success!\n";
 
         //select returned due to existence of something to read.
-        read( m_ReadFD, &m_Msg, sizeof(MessageHeader));
+        ::read( m_ReadFD, &m_Msg, sizeof(MessageHeader));
         if(m_Msg.id == EMessageType::TUPLE_RETURN)
         {
-            bool ReadSuccess = (read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
+            bool ReadSuccess = (::read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
             Tuple t;
             if(ReadSuccess)
             {
                 t.deserialize(string(m_Msg.data));
             }
-            cout<<"Client received a beautiful Tuple: "<<t.serialize()<<endl;
+            if(Globals::c_Debug)
+                cout<<"Client received a beautiful Tuple: "<<t.serialize()<<endl;
 
             m_Sem1->unlock();
             return t;
@@ -141,7 +141,9 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
         else
         {
             //TODO: else if NOT tuple_return, ex.server error..
-            cout<<"server returned error"  <<endl;
+            if(Globals::c_Debug)
+                cout<<"server returned error"  <<endl;
+
             m_Sem1->unlock();
             return Tuple();
         }
@@ -157,20 +159,23 @@ bool linda::TupleClient::output(const Tuple& t)
     write(m_WriteFD,&m_Msg,m_Msg.messageSize());
 
     //read output ack!
-    read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
+    ::read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
     if(m_Msg.id == EMessageType::OUTPUT_ACK)
     {
-        cout <<"output ok"<<endl;
+        if(Globals::c_Debug)
+            cout <<"output ok"<<endl;
         return true;
     }
     else if(m_Msg.id == EMessageType::OUTPUT_ERROR)
     {
-        cout <<"output error"<<endl;
+        if(Globals::c_Debug)
+            cout <<"output error"<<endl;
         return false;
     }
     else
     {
-        cout <<"unexpected output answer"<<endl;
+        if(Globals::c_Debug)
+            cout <<"unexpected output answer"<<endl;
         return false;
     }
    return true;
