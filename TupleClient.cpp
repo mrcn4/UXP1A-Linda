@@ -70,13 +70,15 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
     if(rv == -1)
     {
         //select error
-        cout <<"Select fatal error. errno of select is " <<errno<<endl;
+        if(Globals::c_Debug)
+            cout <<"Select fatal error. errno of select is " <<errno<<endl;
         m_Sem1->unlock();
         return Tuple(); //return false
     }
     else if(rv == 0)
     {
-        cout<<"TIMEOUT"<<endl;
+        if(Globals::c_Debug)
+            cout<<"TIMEOUT"<<endl;
         //timeout. One needs to check whether tuple was send between timeout and sending cancel request
         m_Sem1->unlock();
         m_Sem2->lock();

@@ -14,9 +14,9 @@ namespace linda {
 	using std::list;
 	using std::string;
 	
-	/*
-	 * \biref parsed query representation
-	 * query  format: (TYPE OPERATOR VALUE)+
+	/**
+     * Parsed query representation.
+     * query  format: (TYPE OPERATOR VALUE)+
 	 * example query: INT > 5 STR == "alfa beta" STR == gamma FLOAT <= 5.2
 	 *
 	 * special case: \ as first character of STR operation operand
@@ -30,7 +30,7 @@ namespace linda {
 	 */
 	class TupleQuery {
 	public:
-		//checks if tuple match query (TupleQuery)
+		/** checks if tuple match query (TupleQuery)*/
 		bool operator==(const Tuple& t) const;
 
 		//c-tor

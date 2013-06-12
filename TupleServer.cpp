@@ -32,8 +32,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
 
     if(ChildrenProcesses.size() != ChildrenArgs.size())
     {
-
-        cout << "not matching processnames/args vector sizes" << endl;
+        if(Globals::c_Debug)
+            cout << "not matching processnames/args vector sizes" << endl;
         return;
     }
 
@@ -405,7 +405,8 @@ bool linda::TupleServer::sendTupleIfStillRequested(int ClientNo, linda::Tuple &t
 
     if(readRV == sizeof(MessageHeader))
     {
-        cout<<"Cancelled?"<<endl;
+        if(Globals::c_Debug)
+            cout<<"Cancelled?"<<endl;
         //new message received!
         if(m_Msg.id == EMessageType::CANCEL_REQUEST)
         {

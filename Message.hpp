@@ -10,11 +10,23 @@ namespace linda
 {
     enum EMessageType {INPUT,OUTPUT,READ,CANCEL_REQUEST,OUTPUT_ACK,TUPLE_RETURN,OUTPUT_ERROR,WRONG_PATTERN} ;
 
+    /**
+     * \brief Header of message sent through unix pipe.
+     */
     struct MessageHeader
     {
+        /**
+         * \brief Type of message
+         */
         char id;
         //(one byte of alignment)
+        /**
+         * \brief Unique tag (per process)
+         */
         short tag;
+        /**
+         * \brief Length of following data
+         */
         short length;
     };
 
@@ -30,6 +42,9 @@ namespace linda
         short length;
         // END OF INSERTED MessageHeader
 
+        /**
+         * \brief Data (for example serialized tuple or request)
+         */
         char data[PIPE_BUF-sizeof(MessageHeader)];
 
         /**

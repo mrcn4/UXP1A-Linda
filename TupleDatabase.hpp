@@ -15,14 +15,12 @@ namespace linda {
 	using std::list;
 	using std::string;
 
-	/*
-	 * \biref database representation, allows to read, input (read with delete), output
+    /**
+	 * \brief database representation, allows to read, input (read with delete), output
 	 * operations are not synchronized!
 	 */
 	class TupleDatabase {
 	public:
-		//Tuple read(const string& query) const;
-		//Tuple input(const string& query);
 		Tuple read(const TupleQuery &tq) const;
 		Tuple input(const TupleQuery &tq);
 		void output(const Tuple& tuple);

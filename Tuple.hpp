@@ -21,6 +21,9 @@ namespace linda {
 	using std::greater;
 	using std::greater_equal;
 	
+    /**
+     * \brief Defines one part of a Tuple
+     */
 	class TupleElement {
 		public:
 			enum EType {INT, FLOAT, STRING};
@@ -145,6 +148,9 @@ namespace linda {
 			}
 	};
 
+    /**
+     * \brief Vector of TupleElements with serialization support.
+     */
 	class Tuple : public std::vector<TupleElement> {
 		public:
 			typedef TupleElement::EType EType; //import EType

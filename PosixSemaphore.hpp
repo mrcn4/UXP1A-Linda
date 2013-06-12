@@ -6,6 +6,9 @@
 
 namespace linda
 {
+    /**
+     * \brief Posix semaphore implementation of Semaphore interface
+     */
     class PosixSemaphore : public Semaphore
     {
     public:
