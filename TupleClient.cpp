@@ -32,6 +32,8 @@ linda::TupleClient::TupleClient (): m_ReadFD(Globals::c_ReadFD), m_WriteFD(Globa
 
 linda::TupleClient::~TupleClient()
 {
+    close(m_ReadFD);
+    close(m_WriteFD);
     delete m_Sem1;
     delete m_Sem2;
 }
@@ -178,7 +180,7 @@ bool linda::TupleClient::output(const Tuple& t)
     else
     {
         if(Globals::c_Debug)
-            cout <<"unexpected output answer"<<endl;
+            cout <<"unexpected output answer: "<< m_Msg.id<<endl;
         return false;
     }
    return true;

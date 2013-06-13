@@ -39,6 +39,9 @@ namespace linda {
         bool sendTupleIfStillRequested(int ClientNo, Tuple& t);
         bool doInputRead(int ClientNo, bool InputReqest,TupleQuery TQ, Tuple t = Tuple());
 
+        bool readMessage(int FD);
+        bool writeMessage(int FD);
+
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;
         vector<Semaphore*> m_Sem1;
