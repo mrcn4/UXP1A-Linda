@@ -33,6 +33,7 @@ namespace linda {
     void remove_quotations(string& str);
     //Tokenize helper:
     string unescaped_string(const string& str);
+	string escape_string(const string& str);
 
 
 }	// -----  end of namespace linda  -----

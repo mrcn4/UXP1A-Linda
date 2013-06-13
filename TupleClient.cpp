@@ -68,7 +68,8 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
     FD_SET(m_ReadFD, &set); // add our file descriptor to the set
 
     //1st arg of select is "the highest-numbered file descriptor in any of the three sets, plus 1."
-    rv = select(m_ReadFD + 1, &set, NULL, NULL, timeout);
+    timeval timeout_select = *timeout; //select zeroes timeval!
+    rv = select(m_ReadFD + 1, &set, NULL, NULL, &timeout_select);
     if(rv == -1)
     {
         //select error

@@ -211,7 +211,7 @@ bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery T
     if(InputReqest)
     {
         if(t.size() == 0)
-            Tuple t = m_DB.input(TQ);
+            t = m_DB.input(TQ);
 
         if(t.size()>0)
         {
@@ -232,7 +232,7 @@ bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery T
     else
     {
         if(t.size() == 0)
-            Tuple t = m_DB.read(TQ);
+            t = m_DB.read(TQ);
         if(t.size()>0)
         {
             sendTupleIfStillRequested(ClientNo,t);
