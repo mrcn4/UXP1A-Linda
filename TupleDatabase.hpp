@@ -25,16 +25,16 @@ namespace linda {
 		Tuple input(const TupleQuery &tq);
 		void output(const Tuple& tuple);
 
-		//check if any of ParsedClientRequest matches Tuple t
-		//returns NULL if ParsedClientRequest not found
-		ParsedClientRequest* searchParsedClientRequest(const list<ParsedClientRequest>& pcr_db, const Tuple& t);
-
+        static list<ParsedClientRequest>::iterator searchParsedClientRequest(list<ParsedClientRequest>& pcr_db, const Tuple& t);
 	private:
 		vector<Tuple> db;
 	};
 	
 	//translation from ParsedClientRequest to TupleQuery
 	bool operator==(const ParsedClientRequest& req, const Tuple& t);
+
+    //check if any of ParsedClientRequest matches Tuple t
+    //returns NULL if ParsedClientRequest not found
 }
 
 #endif

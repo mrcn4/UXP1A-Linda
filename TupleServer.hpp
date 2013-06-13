@@ -33,10 +33,11 @@ namespace linda {
         
         private:
         void handle_output(int ClientNo);
-        void handle_read(int ClientNo, bool IsInputRequest);
+        void handle_input_read(int ClientNo, bool IsInputRequest);
         void handle_cancel(int ClientNo);
+
         bool sendTupleIfStillRequested(int ClientNo, Tuple& t);
-        bool doInputRead(int ClientNo, bool InputReqest,TupleQuery t);
+        bool doInputRead(int ClientNo, bool InputReqest,TupleQuery TQ, Tuple t = Tuple());
 
         vector<int> m_InputPipes;
         vector<int> m_OutputPipes;

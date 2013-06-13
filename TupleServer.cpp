@@ -27,6 +27,11 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         {
             cout << *it << endl;
         }
+        cout<<"List of args to run:\n";
+        for(auto it = ChildrenArgs.begin(); it != ChildrenArgs.end(); ++it)
+        {
+            cout << *it[0] << endl;
+        }
     }
 
 
@@ -154,7 +159,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                     switch(m_Msg.id)
                     {
                         case EMessageType::INPUT:
-                            handle_read(clientCount,true);
+                            handle_input_read(clientCount,true);
                         break;
                         case EMessageType::OUTPUT:
                             handle_output(clientCount);
@@ -163,7 +168,7 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                             handle_cancel(clientCount);
                         break;
                         case EMessageType::READ:
-                            handle_read(clientCount,false);
+                            handle_input_read(clientCount,false);
                         break;
                         default:
                             if(Globals::c_Debug)
@@ -175,12 +180,6 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                 {
                     close(m_InputPipes[clientCount]);
                     close(m_OutputPipes[clientCount]);
-
-                    if(m_Sem1[clientCount]->isLocked())
-                        m_Sem1[clientCount]->unlock();
-                    if(m_Sem2[clientCount]->isLocked())
-                        m_Sem2[clientCount]->unlock();
-
                     delete(m_Sem1[clientCount]);
                     delete(m_Sem2[clientCount]);
 
@@ -189,6 +188,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                     m_OutputPipes.erase(m_OutputPipes.begin()+clientCount);
                     m_Sem1.erase(m_Sem1.begin()+clientCount);
                     m_Sem2.erase(m_Sem2.begin()+clientCount);
+
+                    --clientCount;
                 }
             }
             ++clientCount;
@@ -197,11 +198,15 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
     return ;
 }
 
-bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery TQ)
+bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery TQ, Tuple t)
 {
+    if(Globals::c_Debug)
+        cout<<"doInputRead" << endl;
     if(InputReqest)
     {
-        Tuple t = m_DB.input(TQ);
+        if(t.size() == 0)
+            Tuple t = m_DB.input(TQ);
+
         if(t.size()>0)
         {
             bool Result = sendTupleIfStillRequested(ClientNo,t);
@@ -220,7 +225,8 @@ bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery T
     }
     else
     {
-        Tuple t = m_DB.read(TQ);
+        if(t.size() == 0)
+            Tuple t = m_DB.read(TQ);
         if(t.size()>0)
         {
             sendTupleIfStillRequested(ClientNo,t);
@@ -233,7 +239,7 @@ bool linda::TupleServer::doInputRead(int ClientNo, bool InputReqest,TupleQuery T
     }
 }
 
-void linda::TupleServer::handle_read(int ClientNo, bool InputReqest)
+void linda::TupleServer::handle_input_read(int ClientNo, bool InputReqest)
 {
     if(Globals::c_Debug)
     {
@@ -301,6 +307,8 @@ void linda::TupleServer::handle_cancel(int ClientNo)
     while (i != std::end(m_WaitingRequests)) {
         if(i->clientId == ClientNo)
         {
+            if(Globals::c_Debug)
+                cout<<"Client request cancelled by client.\n";
         	m_WaitingRequests.erase(i);
             break;
         }
@@ -342,41 +350,36 @@ void linda::TupleServer::handle_output(int ClientNo)
             write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
         }
 
-        m_DB.output(t);
-
         //ack output
         m_Msg.id = EMessageType::OUTPUT_ACK;
         m_Msg.length = 0;
         //tag is the same
         write(m_OutputPipes[ClientNo],&m_Msg,m_Msg.messageSize());
 
-        //redo all queries (TODO: should be before output and only new typle with requests)
-        auto i = std::begin(m_WaitingRequests);
-        while (i != std::end(m_WaitingRequests)) {
+        //redo all queries
+        bool inputFlag = false;
+        auto i = TupleDatabase::searchParsedClientRequest(m_WaitingRequests,t);
+        while(i != std::end(m_WaitingRequests)) {
+            if(Globals::c_Debug)
+                cout<<"    Tuple request for output tuple found!" << endl;
+
             if(i->id == EMessageType::INPUT)
             {
-                Tuple t = m_DB.input(i->tq);
-                if(t.size()>0)
-                {
-                    //tuple found
-                    bool Result = sendTupleIfStillRequested(i->clientId,t);
-                    if(false == Result)
-                    {
-                        m_DB.output(t);
-                    }
-                    i = m_WaitingRequests.erase(i);
-                    continue;
-                }
+                bool Result = doInputRead(i->clientId,true,i->tq,t);
+                if(Globals::c_Debug)
+                    cout<<"    Tuple sent? "  << Result << endl;
+                i = m_WaitingRequests.erase(i);
+                inputFlag = true;
+                break;
             }
             else if(i->id == EMessageType::READ)
             {
-                Tuple t = m_DB.read(i->tq);
-                if(t.size()>0)
-                {
-                    sendTupleIfStillRequested(i->clientId,t);
-                    i = m_WaitingRequests.erase(i);
-                    continue;
-                }
+
+                bool Result = doInputRead(i->clientId,false,i->tq,t);
+                if(Globals::c_Debug)
+                    cout<<"    Tuple sent? "  << Result << endl;
+                i = m_WaitingRequests.erase(i);
+                continue;
             }
             else
             {
@@ -384,9 +387,16 @@ void linda::TupleServer::handle_output(int ClientNo)
                     cout<<"Wrong message type in requests." << endl;
             }
 
-            ++i;
+            i = TupleDatabase::searchParsedClientRequest(m_WaitingRequests,t);
         }
+        if(!inputFlag)
+        {
+            if(Globals::c_Debug)
+                cout<<"No Tuple input request maches output tuple, put it to db." << endl;
 
+            //if there was no input request, output the tuple
+            m_DB.output(t);
+        }
     }
 }
 
@@ -450,23 +460,26 @@ main ( int argc, char *argv[] )
 
     if(argc<2)
     {
-        cout	<< "You should provide name of program to launch (for example absolute 'client' path from make)" << endl;
+        cout	<< "You should provide names of programs to launch (for example absolute 'client' path from make)" << endl;
     }
 
-    //TODO: doprowadzic do mozliwosci dowolnej ilosci children
     linda::TupleServer Cts;
     vector<string> Vs;
-    char* c_LsChar = argv[1];
-    Vs.push_back(c_LsChar);
-   // Vs.push_back(c_LsChar);
     vector<char**> Args;
-    
-    char* CharArgs[2];                          // null terminated array of c strings
-    CharArgs[0] = c_LsChar;
-    CharArgs[1] = 0;
 
-    Args.push_back(CharArgs);
-    //Args.push_back(CharArgs);
+
+
+    for(int i=1;i<argc;++i)
+    {
+        char* c_ClientProgramName = argv[i];
+        Vs.push_back(c_ClientProgramName);
+
+        char** CharArgs = new char*[2]; // null terminated array of c strings
+        CharArgs[1] = 0;
+        CharArgs[0] = c_ClientProgramName;
+        Args.push_back(CharArgs);
+    }
+
     Cts.init(Vs,Args);
     return EXIT_SUCCESS;
 }				// ----------  end of function main  ----------

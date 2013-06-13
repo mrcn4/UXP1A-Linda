@@ -34,8 +34,8 @@ bool linda::operator==(const ParsedClientRequest& req, const Tuple& t) {
 	return req.tq == t;
 }
 
-list<ParsedClientRequest>::iterator searchParsedClientRequests(list<ParsedClientRequest>& pcr_db, const Tuple& t) {
-	auto it = find(pcr_db.begin(), pcr_db.end(), t);
+list<ParsedClientRequest>::iterator linda::TupleDatabase::searchParsedClientRequest(list<ParsedClientRequest>& pcr_db, const Tuple& t) {
+    auto it = find(pcr_db.begin(), pcr_db.end(), t);
 
-	return it;
+    return it;
 }
