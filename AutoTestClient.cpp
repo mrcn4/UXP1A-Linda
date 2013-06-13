@@ -83,7 +83,7 @@ string create_random_query(int type) {
 				q+=">= ";
 			else if(op_type==2) {
 				q+="== ";
-				if(rand()%3 == 0) //33% chance
+				if(rand()%2 == 0) //50% chance
 				{
 					//accept all
 					q+="* ";
@@ -107,7 +107,7 @@ string create_random_query(int type) {
 				q+=">= ";
 			else if(op_type==2) {
 				q+="== ";
-				if(rand()%3 == 0) //33% chance
+				if(rand()%2 == 0) //50% chance
 				{
 					//accept all
 					q+="* ";
@@ -127,7 +127,7 @@ string create_random_query(int type) {
 			q+=">= ";
 		else if(op_type==2) {
 			q+="== ";
-			if(rand()%3 == 0) //33% chance
+			if(rand()%2 == 0) //50% chance
 			{
 				//accept all
 				q+="* ";
@@ -143,6 +143,25 @@ string create_random_query(int type) {
 
 	return q;
 }
+
+
+////accept all
+//string create_random_query(int type) {
+//	string q;
+//
+//	type %= 2; //2 types avaliable
+//
+//	if(type==0) {
+//		//int int
+//		q = "INT == * INT == *";
+//	}
+//	else if(type==1) {
+//		//int string
+//		q = "INT == * STR == *";
+//	}
+//
+//	return q;
+//}
 
 void do_random_in() {
 	Tuple t = create_random_tuple(rand());
@@ -190,7 +209,7 @@ void do_random_out() {
 int main ( int argc, char *argv[] )
 {
 	srand(time(NULL));
-	timeout.tv_sec  = 3;
+	timeout.tv_sec  = 1;
 	timeout.tv_usec = 0;
 
     try
