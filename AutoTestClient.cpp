@@ -192,6 +192,7 @@ void do_random_out() {
 // c/(p+c) -> percentage of consumer tasks (input, read)
 int main ( int argc, char *argv[] )
 {
+	usleep(1000);
 	srand(time(NULL));
 	timeout.tv_sec  = 1;
 	timeout.tv_usec = 0;
