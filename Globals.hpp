@@ -6,7 +6,7 @@ struct Globals{
     static const int c_ClientTimeoutSeconds = 3;
     static const int c_WriteFD = c_MaxFDExclusive-1;
     static const int c_ReadFD = c_MaxFDExclusive-2;
-    static const bool c_Debug = true;
+    static const bool c_Debug = false;
 };
 
 #endif
