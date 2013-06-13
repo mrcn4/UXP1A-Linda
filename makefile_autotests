@@ -4,7 +4,7 @@ server:
 	g++ -g -std=c++11 TupleServer.cpp HelperFunctions.cpp PosixSemaphore.cpp Tuple.cpp TupleDatabase.cpp TupleQuery.cpp -o server -lpthread -lrt
 
 client:
-	 g++ -g -std=c++11 AutoTestClient.cpp TupleClient.cpp Tuple.cpp  HelperFunctions.cpp PosixSemaphore.cpp -o client -lpthread -lrt
+	 g++ -g -std=c++11 AutoTestClient.cpp TupleClient.cpp Tuple.cpp  HelperFunctions.cpp PosixSemaphore.cpp -o autoclient -lpthread -lrt
 
 clean:
 	rm -f server client *.o

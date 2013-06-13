@@ -452,8 +452,9 @@ bool linda::TupleServer::sendTupleIfStillRequested(int ClientNo, linda::Tuple &t
     m_Sem2[ClientNo]->unlock();
     return returnValue;
 }
-    int
-main ( int argc, char *argv[] )
+
+
+int main ( int argc, char *argv[] )
 {
 
     if(argc<2)
