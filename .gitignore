@@ -7,3 +7,7 @@ test1/server
 test1/clientInput
 test1/clientRead
 test1/clientOutput
+test2/server
+test2/clientInput
+test2/clientRead
+test2/clientOutput
