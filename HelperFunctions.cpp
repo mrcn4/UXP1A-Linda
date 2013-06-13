@@ -51,6 +51,20 @@ namespace linda {
 
     	return result;
     }
+	
+	//inverse to unescaped_string()
+	string escape_string(const string& str) {
+	    string result;
+
+    	for(size_t i=0;i < str.size();++i) {
+    		if(str[i] == '\\' || str[i] == '*' || str[i] == '"')
+    			result += '\\'; //extra \
+			
+			result += str[i];
+    	}
+
+    	return result;
+	}
 
     // "alfa" -> alfa
     void remove_quotations(string& str) {

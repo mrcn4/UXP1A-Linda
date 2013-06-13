@@ -15,32 +15,22 @@ string Tuple::serialize() const {
 			case EType::INT:
 				int vali;
 				it.loadTo(vali);
-				element_repr += "I \"";
+				element_repr += "INT ";
 				element_repr += to_string(vali);
-				element_repr += "\" ";
+				element_repr += " ";
 				break;
 			case EType::FLOAT:
 				float valf;
 				it.loadTo(valf);
-				element_repr += "F \"";
+				element_repr += "FLOAT ";
 				element_repr += to_string(valf);
-				element_repr += "\" ";
+				element_repr += " ";
 				break;
 			case EType::STRING:
 				string vals;
-				element_repr += "S \"";
+				element_repr += "STR \"";
 				it.loadTo(vals);
-				for(unsigned int i = 0; i < vals.length(); ++i)
-				{
-					if(vals[i] == '\"') 
-					{
-                        //std::cout << "\"" << std::endl;
-						vals.insert(i, "\\");
-                        //std::cout << vals << std::endl;
-						++i;
-					}
-				}
-				element_repr += vals;
+				element_repr += escape_string(vals);
 				element_repr += "\" ";
 				break;
 		}
@@ -59,19 +49,21 @@ void Tuple::deserialize(string serialTuple)
 	Tokenize(serialTuple, tokenTuple);
 	for(unsigned int i = 0; i < tokenTuple.size(); ++i)
 	{
-		if(!tokenTuple[i].compare("I"))
+		//std::cout << "TOK " <<tokenTuple[i] << std::endl;
+
+		if(tokenTuple[i] == "INT")
 		{
 			if(++i < tokenTuple.size()) push_back(std::stoi(tokenTuple[i]));
 		}
-		else if(!tokenTuple[i].compare("F"))
+		else if(tokenTuple[i] == "FLOAT")
 		{
 			if(++i < tokenTuple.size()) push_back(std::stof(tokenTuple[i]));
 		}
-		else if(!tokenTuple[i].compare("S"))
+		else if(tokenTuple[i] =="STR")
 		{
 			if(++i < tokenTuple.size()) push_back(tokenTuple[i]);
 		}
-		else throw std::invalid_argument("Invalid type");
+		else throw std::invalid_argument("Invalid type in deserialize");
 	}
 }
 
