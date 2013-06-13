@@ -86,17 +86,30 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
         m_Sem1->unlock();
         m_Sem2->lock();
 
+        if(Globals::c_Debug)
+            cout<<" before Nonblocking read"<<endl;
         //async read
         int flags = fcntl(m_ReadFD, F_GETFL, 0);
         fcntl(m_ReadFD, F_SETFL, flags | O_NONBLOCK);
         int readRV = ::read(m_ReadFD,&m_Msg,sizeof(MessageHeader));
         fcntl(m_ReadFD, F_SETFL, flags);
 
+        if(Globals::c_Debug)
+            cout<<" after Nonblocking read"<<endl;
+
         if(readRV == sizeof(MessageHeader)) //wiadomość wysłana wyslana po select przed s1.unlock
         {
             if(m_Msg.id == EMessageType::TUPLE_RETURN)
             {
+
+                if(Globals::c_Debug)
+                    cout<<" Tuple read blocking"<<endl;
+
                  bool ReadSuccess = (::read(m_ReadFD,&m_Msg.data,m_Msg.length) == m_Msg.length);
+
+                 if(Globals::c_Debug)
+                     cout<<" Tuple read blocking end"<<endl;
+
                  Tuple t;
                  if(ReadSuccess)
                  {
@@ -110,10 +123,14 @@ Tuple linda::TupleClient::readTupleImpl(EMessageType type, string pattern, timev
                //else if NOT tuple_return, ex.server error..
                 if(Globals::c_Debug)
                     cout<<"server returned error"  <<endl;
+
+                m_Sem2->unlock();
                 return Tuple();
             }
         }
         else{
+            if(Globals::c_Debug)
+                cout<<"sending cancel request after timeout"  <<endl;
             //send cancel request
             m_Msg.id = EMessageType::CANCEL_REQUEST;
             m_Msg.tag = m_Tag;

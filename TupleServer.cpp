@@ -138,6 +138,10 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }
         //endof select preparation
 
+
+        if(Globals::c_Debug)
+            cout<<"Server enters select in main loop."<<endl;
+
         //1st arg: "the highest-numbered file descriptor in any of the three sets, plus 1."
         //2nd arg: read set; 3rd arg: write set (0 FD); 4th arg: alarm set (0 FD)
         //5th arg: timeout (no timeout - till infinity)
@@ -313,12 +317,14 @@ void linda::TupleServer::handle_cancel(int ClientNo)
         if(i->clientId == ClientNo)
         {
             if(Globals::c_Debug)
-                cout<<"Client request cancelled by client.\n";
+                cout<<"Client request cancelled by client."<<endl;
         	m_WaitingRequests.erase(i);
             break;
         }
+        ++i;
     }
-
+    if(Globals::c_Debug)
+        cout<<"End of cancel."<<endl;
 }
 
 void linda::TupleServer::handle_output(int ClientNo)

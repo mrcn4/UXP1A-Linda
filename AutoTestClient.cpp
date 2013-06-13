@@ -166,7 +166,7 @@ string create_random_query(int type) {
 void do_random_in() {
 	Tuple t = create_random_tuple(rand());
 
-	cout << "OUTPUT "<< t.serialize() <<  " ... ";
+    cout << getpid() << ": OUTPUT "<< t.serialize() <<  " ... ";
 	cout << std::flush;
 
 	//Tuple t2;
@@ -183,7 +183,7 @@ void do_random_in() {
 void do_random_out() {
 	string q = create_random_query(rand());
 
-	cout << "INPUT  "<< q << " ... ";
+    cout << getpid() <<": INPUT  "<< q << " ... ";
 	cout << std::flush;
 
 	Tuple t;
@@ -230,9 +230,10 @@ int main ( int argc, char *argv[] )
 //
     unsigned int produce = 4;//stoi(string(argv[1]));
     unsigned int consume = 1;//stoi(string(argv[2]));
-
-
+    Tuple t;
+    t.push_back("");
     while(1) {
+
     	int rnd = rand() % (produce + consume);
 
     	if(rnd < produce) {
@@ -243,7 +244,7 @@ int main ( int argc, char *argv[] )
     		do_random_out();
     	}
 
-    	usleep(1000*(rand()%501)); //0-500ms;
+        usleep(1000*(rand()%501)); //0-500ms;
     }
 
     //cout	<<  "Klient zako�czy� dzia�anie powodzeniem" << endl;
