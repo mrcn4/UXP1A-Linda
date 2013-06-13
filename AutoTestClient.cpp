@@ -29,22 +29,6 @@ TupleClient* Ctc = NULL;
 timeval timeout;
 
 
-/*
-void signalHandler(int signum) {
-	sigprocmask(SIG_BLOCK, &signalSet, NULL);
-	delete Ctc;
-	printf("EXIT DUE TO SIGNAL!\n"); //printf not allowed in handler
-    exit(EXIT_FAILURE);
-}
-
-void catchSignals() {
-	//in case of emergency
-	sigemptyset(&signalSet);
-	sigset(SIGABRT|SIGBUS|SIGFPE|SIGILL|SIGINT|SIGQUIT|SIGSEGV|SIGTERM|SIGSYS, signalHandler);
-	sigprocmask(SIG_SETMASK, &signalSet, NULL);
-}
-//*/
-
 
 Tuple create_random_tuple(int type) {
 	Tuple t;
@@ -246,7 +230,6 @@ int main ( int argc, char *argv[] )
     	usleep(1000*(rand()%501)); //0-500ms;
     }
 
-    //cout	<<  "Klient zako�czy� dzia�anie powodzeniem" << endl;
 
     return EXIT_SUCCESS;
 }
