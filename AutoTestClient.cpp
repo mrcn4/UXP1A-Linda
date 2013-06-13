@@ -26,6 +26,8 @@ void random_str(string& s, const int len) {
 
 sigset_t signalSet;
 TupleClient* Ctc = NULL;
+timeval timeout;
+
 
 /*
 void signalHandler(int signum) {
@@ -50,15 +52,15 @@ Tuple create_random_tuple(int type) {
 
 	if(type==0) {
 		//int int
-		t.push_back(rand()%101); //0-100
-		t.push_back(rand()%101); //0-100
+		t.push_back(rand()%11); //0-10
+		t.push_back(rand()%11); //0-10
 	}
 	else if(type==1) {
 		//int string
-		t.push_back(rand()%11); //0-10
+		t.push_back(rand()%6); //0-5
 		string stri;
-		random_str(stri,3); //stri.size() == 3
-		t.push_back(stri); //3 chars
+		random_str(stri,2); //stri.size() == 2
+		t.push_back(stri); //2 chars
 	}
 
 	return t;
@@ -70,7 +72,7 @@ string create_random_query(int type) {
 	type %= 2; //2 types avaliable
 
 	if(type==0) {
-		//int 0-100 int 0-100
+		//int 0-10 int 0-10
 
 		for(int i=0;i<2;++i) {
 			q += "INT ";
@@ -89,12 +91,12 @@ string create_random_query(int type) {
 				}
 			}
 
-			q+= to_string(rand()%101) + " ";
+			q+= to_string(rand()%11) + " ";
 		}
 
 	}
 	else if(type==1) {
-		//int 0-10 string 3
+		//int 0-5 string 2
 
 		for(int i=0;i<1;++i) {
 			q += "INT ";
@@ -113,7 +115,7 @@ string create_random_query(int type) {
 				}
 			}
 
-			q+= to_string(rand()%11) + " ";
+			q+= to_string(rand()%6) + " ";
 		}
 
 		q+="STR ";
@@ -134,7 +136,7 @@ string create_random_query(int type) {
 		}
 
 		string stri;
-		random_str(stri,3); //stri.size() == 3
+		random_str(stri,2); //stri.size() == 2
 		q+= stri + " ";
 	}
 
@@ -145,19 +147,41 @@ string create_random_query(int type) {
 void do_random_in() {
 	Tuple t = create_random_tuple(rand());
 
-	cout << "OUTPUT "<< t.serialize() << endl;
+	cout << "OUTPUT "<< t.serialize() <<  " ... ";
+	cout << std::flush;
 
 	//Tuple t2;
 	//t2.deserialize(t.serialize());
 	//cout << "TEST "<< (t == t2) << endl;
 
+
+	Ctc->output(t);
+
+	cout << "OK"<<endl;
 }
 
 
 void do_random_out() {
 	string q = create_random_query(rand());
 
-	cout << "INPUT "<< q << endl;
+	cout << "INPUT  "<< q << " ... ";
+	cout << std::flush;
+
+	Tuple t;
+
+	if(rand()%3==0) {
+		t = Ctc->read(q,&timeout);
+		cout << "R ";
+	} else {
+		t = Ctc->input(q,&timeout);
+		cout << "I ";
+	}
+
+	if(t.size()==0)
+		cout << "TIMEOUT"<<endl;
+	else
+		cout << endl<<"RECIVD " << t.serialize() << endl;
+
 }
 
 // usage: client produce_uint consume_uint
@@ -165,8 +189,9 @@ void do_random_out() {
 // c/(p+c) -> percentage of consumer tasks (input, read)
 int main ( int argc, char *argv[] )
 {
-	//catchSignals();
 	srand(time(NULL));
+	timeout.tv_sec  = 3;
+	timeout.tv_usec = 0;
 
     try
     {
@@ -184,8 +209,8 @@ int main ( int argc, char *argv[] )
 //    	return EXIT_FAILURE;
 //    }
 //
-    unsigned int produce = 1;//stoi(string(argv[1]));
-    unsigned int consume = 2;//stoi(string(argv[2]));
+    unsigned int produce = 4;//stoi(string(argv[1]));
+    unsigned int consume = 1;//stoi(string(argv[2]));
 
 
     while(1) {
