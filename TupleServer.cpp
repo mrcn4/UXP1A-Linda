@@ -113,6 +113,8 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
         }//end child case
 
     }
+
+    CreationSemaphore->unlink();
     delete CreationSemaphore;
 
     //begin processing events: enter infinite loop
@@ -180,7 +182,10 @@ linda::TupleServer::init ( vector<string> ChildrenProcesses, vector<char**> Chil
                 {
                     close(m_InputPipes[clientCount]);
                     close(m_OutputPipes[clientCount]);
+
+                    m_Sem1[clientCount]->unlink();
                     delete(m_Sem1[clientCount]);
+                    m_Sem2[clientCount]->unlink();
                     delete(m_Sem2[clientCount]);
 
                     //remove

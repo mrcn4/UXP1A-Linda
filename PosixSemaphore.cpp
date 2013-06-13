@@ -7,6 +7,7 @@
 linda::PosixSemaphore::PosixSemaphore(const char* name, int flags ,mode_t mode, int value)
 {
     m_sem = sem_open(name,flags,mode, value);
+    m_name = string(name);
     if(m_sem == SEM_FAILED)
     {
         throw std::logic_error("sem_open failed!");
@@ -16,6 +17,7 @@ linda::PosixSemaphore::PosixSemaphore(const char* name, int flags ,mode_t mode, 
 linda::PosixSemaphore::PosixSemaphore(const char* name, int flags)
 {
     m_sem = sem_open(name,flags);
+    m_name = string(name);
     if(m_sem == SEM_FAILED)
     {
         throw std::logic_error("sem_open failed!");
@@ -79,4 +81,9 @@ bool linda::PosixSemaphore::timedLock(int Miliseconds)
         }
     }
     return true;
+}
+
+bool linda::PosixSemaphore::unlink()
+{
+    sem_unlink(m_name.c_str());
 }

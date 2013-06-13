@@ -3,6 +3,9 @@
 
 #include <semaphore.h>
 #include "Semaphore.hpp"
+#include <string>
+
+using std::string;
 
 namespace linda
 {
@@ -21,12 +24,14 @@ namespace linda
         void unlock();
         bool isLocked();
         bool timedLock(int Miliseconds);
+        bool unlink();
 
 
     private:
         PosixSemaphore(const PosixSemaphore&);
         PosixSemaphore& operator=( const PosixSemaphore& other );
         sem_t* m_sem;
+        string m_name;
     };
 }
 

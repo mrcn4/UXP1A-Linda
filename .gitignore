@@ -3,4 +3,7 @@ latex/
 server
 client
 tags
-test
+test1/server
+test1/clientInput
+test1/clientRead
+test1/clientOutput

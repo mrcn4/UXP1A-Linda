@@ -28,9 +28,15 @@ namespace linda
          *
          * \param Miliseconds timeout value in miliseconds
          *
-         * \returns 
+         * \returns success locking within timeout
          */
         virtual bool timedLock(int Miliseconds) = 0;
+
+        /**
+         * \brief Removes semaphore from system
+         */
+        virtual bool unlink() = 0;
+
         /**
          * \brief Destructor.
          */
